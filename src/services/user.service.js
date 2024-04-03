@@ -22,4 +22,44 @@ const userSignUp = async (payload) => {
   };
 };
 
-module.exports = { userSignUp };
+const userLogin = async (payload) => {
+  const foundUser = await User.findOne({ email: payload.email });
+  if (!foundUser) {
+    return {
+      message: "User details incorrect",
+      success: false,
+      statusCode: 404,
+    };
+  }
+  const userPassword = await bcrypt.compare(
+    payload.password,
+    foundUser.password
+  );
+  if (!userPassword) {
+    return {
+      message: "Invalid password",
+      success: false,
+      statusCode: 400,
+    };
+  }
+
+  const token = jwt.sign(
+    {
+      email: foundUser.email,
+      _id: foundUser._id,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "5min",
+    }
+  );
+  return {
+    message: "Login successful",
+    success: true,
+    statusCode: 200,
+    data: foundUser,
+    token: token,
+  };
+};
+
+module.exports = { userSignUp, userLogin };
