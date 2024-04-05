@@ -1,46 +1,37 @@
 const User = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const responses = require("../utility/send.response");
 
 //Student signup
 const userSignUp = async (payload) => {
   const foundUser = await User.findOne({ email: payload.email });
   if (foundUser) {
-    return {
-      message: "Email already exists",
-      statusCode: 400,
-    };
+    return responses.failureResponse("Email already exists", 400);
   }
   payload.password = await bcrypt.hash(payload.password, 10);
-  payload.role = "student";
 
   const registerUser = await User.create(payload);
-  return {
-    message: "Registration successful",
-    statusCode: 201,
-    data: registerUser,
+  const data = {
+    firstName: payload.firstName,
+    lastName: payload.lastName,
+    email: payload.email,
   };
+  return responses.successResponse("Registeration successful", 201, data);
 };
 
+// Student Login
 const userLogin = async (payload) => {
   const foundUser = await User.findOne({ email: payload.email });
   if (!foundUser) {
-    return {
-      message: "User details incorrect",
-      success: false,
-      statusCode: 404,
-    };
+    return responses.failureResponse("User details incorrect", 404);
   }
   const userPassword = await bcrypt.compare(
     payload.password,
     foundUser.password
   );
   if (!userPassword) {
-    return {
-      message: "Invalid password",
-      success: false,
-      statusCode: 400,
-    };
+    return responses.failureResponse("Invalid password", 400);
   }
 
   const token = jwt.sign(
@@ -50,16 +41,10 @@ const userLogin = async (payload) => {
     },
     process.env.JWT_SECRET,
     {
-      expiresIn: "5min",
+      expiresIn: "30d",
     }
   );
-  return {
-    message: "Login successful",
-    success: true,
-    statusCode: 200,
-    data: foundUser,
-    token: token,
-  };
+  return responses.successResponse("Login successful", 200, foundUser, token);
 };
 
 module.exports = { userSignUp, userLogin };

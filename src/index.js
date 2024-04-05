@@ -7,6 +7,7 @@ const rateLimit = require("express-rate-limit");
 
 // Importing modules from src
 const userRoutes = require("./routes/user.routes");
+const adminRoutes = require("./routes/admin.routes.js");
 
 //Environment variables configuration
 const app = express();
@@ -29,6 +30,7 @@ app.use(limiter);
 app.use(morgan("combined"));
 app.use(express.json());
 app.use("/lms", userRoutes);
+app.use("/lms-admin", adminRoutes);
 
 // Server
 const server = http.createServer(app);

@@ -1,5 +1,6 @@
 const userServices = require("../services/user.service");
 
+// Student signup and login controllers
 const userSignUpController = async (req, res) => {
   const data = await userServices.userSignUp(req.body);
   res.status(data.statusCode).json(data);
