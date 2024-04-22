@@ -19,6 +19,22 @@ const userSchema = new Mongoose.Schema(
       type: String,
       required: true,
     },
+    verificationToken: {
+      type: String,
+    },
+    verificationTokenExpires: {
+      type: Date,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    resetPin: {
+      type: Number,
+    },
+    resetPinExpires: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
