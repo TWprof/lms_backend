@@ -90,8 +90,17 @@ const userLogin = async (payload) => {
 //Password Recovery
 const forgotPassword = async (payload) => {
   const emailFound = await User.findOne({ email: payload.email });
+  if (!payload || !payload.email) {
+    return responses.failureResponse(
+      "This field cannot be empty. Please input your email",
+      400
+    );
+  }
   if (!emailFound) {
-    return responses.failureResponse("Invalid Email", 400);
+    return responses.failureResponse(
+      "Incorrect email! Please check and try again",
+      400
+    );
   }
   const resetPin = generateResetPin();
   const resetPinExpires = new Date(Date.now() + 300000);
@@ -119,20 +128,17 @@ const forgotPassword = async (payload) => {
       500
     );
   }
-  return responses.successResponse("Reset pin sent successfully", 200, {
-    resetPin: resetPin,
-  });
+  return responses.successResponse("Reset pin sent successfully", 200, {});
 };
 
 const verifyResetPin = async (payload) => {
   const user = await User.findOne({ resetPin: payload.resetPin });
+  if (!payload || !payload.resetPin) {
+    return responses.failureResponse("Cannot be empty. Input reset pin", 400);
+  }
   if (!user) {
     return responses.failureResponse("Reset PIN is expired or invalid", 400);
   }
-  // if (user.resetPin !== pin) {
-  //   return responses.failureResponse("Reset PIN is invalid", 400);
-  // }
-  // Clear the reset PIN and expiration after successful use
   user.resetPin = undefined;
   user.resetPinExpires = undefined;
   await user.save();

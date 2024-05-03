@@ -1,13 +1,13 @@
-//Importing Libraries
 const express = require("express");
 const http = require("http");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
-
-// Importing modules from src
 const userRoutes = require("./routes/user.routes");
 const adminRoutes = require("./routes/admin.routes.js");
+const connectDB = require("./config/database");
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./swaggerSpec.js");
 
 //Environment variables configuration
 const app = express();
@@ -15,7 +15,6 @@ dotenv.config();
 const PORT = process.env.PORT || 3000;
 
 //Database
-const connectDB = require("./config/database");
 connectDB(process.env.MONGO_URI);
 
 const limiter = rateLimit({
@@ -29,8 +28,15 @@ const limiter = rateLimit({
 app.use(limiter);
 app.use(morgan("combined"));
 app.use(express.json());
-app.use("/lms", userRoutes);
-app.use("/lms-admin", adminRoutes);
+app.use(express.urlencoded({ extended: true }));
+app.use("/api/v1", userRoutes);
+app.use("/api/v1/admin", adminRoutes);
+app.get("/", (req, res) => {
+  return res.send(
+    "Welcome to Techware Professional Services Learning Platform"
+  );
+});
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Server
 const server = http.createServer(app);
