@@ -62,6 +62,12 @@ const userLogin = async (payload) => {
   if (!foundUser) {
     return responses.failureResponse("User details incorrect", 404);
   }
+  if (isVerified !== true) {
+    return responses.failureResponse(
+      "Only verified users can login. Please verify your email",
+      400
+    );
+  }
   const userPassword = await bcrypt.compare(
     payload.password,
     foundUser.password

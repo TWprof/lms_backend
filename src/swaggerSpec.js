@@ -10,6 +10,10 @@ const options = {
     },
     servers: [
       {
+        url: "http://lms-backend-5t54.onrender.com",
+        description: "Staging Server",
+      },
+      {
         url: "http://localhost:8024",
         description: "Local Server",
       },

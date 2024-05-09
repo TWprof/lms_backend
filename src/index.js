@@ -8,6 +8,7 @@ const adminRoutes = require("./routes/admin.routes.js");
 const connectDB = require("./config/database");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./swaggerSpec.js");
+const seedAdmin = require("./seeding/index.js");
 
 //Environment variables configuration
 const app = express();
@@ -16,6 +17,7 @@ const PORT = process.env.PORT || 3000;
 
 //Database
 connectDB(process.env.MONGO_URI);
+seedAdmin();
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

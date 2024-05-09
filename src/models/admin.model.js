@@ -21,11 +21,16 @@ const staffSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      // required: true,
     },
     role: {
       type: String,
-      enum: ["Staff", "Tutor"],
+      required: true,
+    },
+    registrationToken: {
+      type: String,
+    },
+    tokenExpiration: {
+      type: Date,
     },
   },
   {
