@@ -6,18 +6,12 @@ const createUserController = async (req, res) => {
   res.status(data.statusCode).json(data);
 };
 
-// const loginStaffController = async (req, res) => {
-//   const data = await adminServices.loginStaff(req.body);
-//   res.status(data.statusCode).json(data);
-// };
+const loginUserController = async (req, res) => {
+  const data = await adminServices.login(req.body);
+  res.status(data.statusCode).json(data);
+};
 
-// // TUTOR CONTROLLERS
-// const loginTutorController = async (req, res) => {
-//   const data = await adminServices.tutorLogin(req.body);
-//   res.status(data.statusCode).json(data);
-// };
 module.exports = {
   createUserController,
-  // loginStaffController,
-  // loginTutorController,
+  loginUserController,
 };

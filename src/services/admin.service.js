@@ -17,7 +17,7 @@ const createUser = async (payload) => {
   }
   payload.registrationToken = crypto.randomBytes(20).toString("hex");
   payload.tokenExpiration = new Date(Date.now() + 3600000);
-  await User.create(payload);
+  await Admin.create(payload);
   const message = `
   <h1>Set password</h1>
             <p> Follow this link to set your password and you can proceed to login:</p>
@@ -25,7 +25,7 @@ const createUser = async (payload) => {
   `;
   const emailPayload = {
     to: payload.email,
-    subject: "Complete Registration",
+    subject: "Complete Your Registration",
     message: message,
   };
   // send email by calling sendMail function
@@ -38,6 +38,32 @@ const createUser = async (payload) => {
   return responses.successResponse("User created successfully", 200, data);
 };
 
+const login = async (payload) => {
+  const foundUser = await Admin.findOne({ email: payload.email });
+  if (!foundUser) {
+    return responses.failureResponse("Email incorrect", 400);
+  }
+  const foundPassword = await bcrypt.compare(
+    payload.password,
+    foundUser.password
+  );
+  if (!foundPassword) {
+    return responses.failureResponse("Password Incorrect", 403);
+  }
+  const token = jwt.sign(
+    {
+      email: foundUser.email,
+      id: foundUser._id,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "30d",
+    }
+  );
+  foundUser.accessToken = token;
+  return responses.successResponse("Login successful", 200, foundUser);
+};
 module.exports = {
   createUser,
+  login,
 };
