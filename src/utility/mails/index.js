@@ -18,7 +18,9 @@ const sendEmail = async (option, type) => {
   if (constants.mailTypes.passwordReset === type) {
     subject = option.subject;
   } else if (constants.mailTypes.verifyEmail === type) {
-    subject = "VERIFY YOUR EMAIL";
+    subject = option.subject;
+  } else if (constants.mailTypes.setPassword === type) {
+    subject = option.subject;
   }
 
   const emailOptions = {
@@ -34,7 +36,7 @@ const sendEmail = async (option, type) => {
   }
 
   try {
-    let info = await transporter.sendMail(emailOptions);
+    const info = await transporter.sendMail(emailOptions);
     console.log("Message sent: %s", info.messageId);
     return info;
   } catch (error) {

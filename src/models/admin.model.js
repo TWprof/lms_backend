@@ -17,7 +17,7 @@ const staffSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: true,
+      required: false,
     },
     password: {
       type: String,
@@ -25,6 +25,8 @@ const staffSchema = new mongoose.Schema(
     role: {
       type: String,
       required: true,
+      enum: ["0", "1", "2"], // 0 for Admin, 1 for Tutor, 2 for Staff
+      default: "0",
     },
     registrationToken: {
       type: String,

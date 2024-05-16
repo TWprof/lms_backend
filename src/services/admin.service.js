@@ -38,6 +38,29 @@ const createUser = async (payload) => {
   return responses.successResponse("User created successfully", 200, data);
 };
 
+const setUserPassword = async (payload) => {
+  const user = await Admin.findOne({
+    registrationToken: payload.registrationToken,
+    tokenExpiration: { $gt: Date.now() },
+  });
+  if (!user) {
+    return responses.failureResponse("Invalid or Expired Token", 401);
+  }
+  payload.password = await bcrypt.hash(payload.password, 10);
+  const updateAdmin = await Admin.findByIdAndUpdate(
+    { _id: user._id },
+    { password: payload.password }
+  );
+  user.registrationToken = undefined;
+  user.tokenExpiration = undefined;
+  await user.save();
+  return responses.successResponse(
+    "Password updated successfully",
+    200,
+    updateAdmin
+  );
+};
+
 const login = async (payload) => {
   const foundUser = await Admin.findOne({ email: payload.email });
   if (!foundUser) {
@@ -63,7 +86,9 @@ const login = async (payload) => {
   foundUser.accessToken = token;
   return responses.successResponse("Login successful", 200, foundUser);
 };
+
 module.exports = {
   createUser,
+  setUserPassword,
   login,
 };

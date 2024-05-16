@@ -10,7 +10,7 @@ const seedAdmin = async () => {
       email: "Mabel@techware.ng",
       phone: "0811234567",
       password: await bcrypt.hash("testing", 10),
-      role: "Admin",
+      role: "0",
     };
 
     const createAdmin = await Admin.create(data);

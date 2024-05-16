@@ -6,6 +6,11 @@ const createUserController = async (req, res) => {
   res.status(data.statusCode).json(data);
 };
 
+const setUserPasswordController = async (req, res) => {
+  const data = await adminServices.setUserPassword(req.body);
+  res.status(data.statusCode).json(data);
+};
+
 const loginUserController = async (req, res) => {
   const data = await adminServices.login(req.body);
   res.status(data.statusCode).json(data);
@@ -13,5 +18,6 @@ const loginUserController = async (req, res) => {
 
 module.exports = {
   createUserController,
+  setUserPasswordController,
   loginUserController,
 };

@@ -24,7 +24,7 @@ const userSignUp = async (payload) => {
   `;
   const emailPayload = {
     to: payload.email,
-    subject: "Email Verification",
+    subject: "VERIFY YOUR EMAIL",
     message: message,
   };
   // send email by calling sendMail function
@@ -160,7 +160,7 @@ const resetPassword = async (payload) => {
     return responses.failureResponse("Incorrect details", 400);
   }
   payload.password = await bcrypt.hash(payload.password, 10);
-  const updateUser = await User.findByIdAndUpdate(
+  await User.findByIdAndUpdate(
     { _id: user._id },
     { password: payload.password },
     { resetPin: null },
