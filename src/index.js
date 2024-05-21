@@ -29,7 +29,7 @@ app.use(cookieParser());
 
 app.use("/api/v1", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   return res.send(
     "Welcome to Techware Professional Services Learning Platform"
   );

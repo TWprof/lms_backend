@@ -16,7 +16,7 @@ const userSignUp = async (payload) => {
   payload.password = await bcrypt.hash(payload.password, 10);
   payload.verificationToken = crypto.randomBytes(32).toString("hex");
   payload.verificationTokenExpires = new Date(Date.now() + 3600000);
-  const registerUser = await User.create(payload);
+  await User.create(payload);
   const message = `
   <h1>Email Verification</h1>
             <p>Thank you for registering. Please confirm your email by clicking this link:</p>
