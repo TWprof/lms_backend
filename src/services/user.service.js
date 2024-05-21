@@ -80,7 +80,7 @@ const userLogin = async (payload) => {
     email: foundUser.email,
     isVerified: foundUser.isVerified,
   };
-  const token = jwt.sign(
+  const authToken = jwt.sign(
     {
       email: foundUser.email,
       _id: foundUser._id,
@@ -90,7 +90,10 @@ const userLogin = async (payload) => {
       expiresIn: "30d",
     }
   );
-  return responses.successResponse("Login successful", 200, returnData, token);
+  return responses.successResponse("Login successful", 200, {
+    returnData,
+    authToken,
+  });
 };
 
 //Password Recovery

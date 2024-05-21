@@ -8,13 +8,15 @@ const crypto = require("crypto");
 
 const createUser = async (payload) => {
   // User = Staff, Tutor
-  const foundUser = await Admin.findOne({ email: payload.email });
-  if (foundUser) {
+  const user = await Admin.findOne({ email: payload.email });
+
+  if (user) {
     return responses.failureResponse(
       "Email already registered. Please provide another",
       403
     );
   }
+
   payload.registrationToken = crypto.randomBytes(20).toString("hex");
   payload.tokenExpiration = new Date(Date.now() + 3600000);
   await Admin.create(payload);
@@ -23,6 +25,7 @@ const createUser = async (payload) => {
             <p> Follow this link to set your password and you can proceed to login:</p>
             <a href="${process.env.ADMIN_HOST}set-password?registrationToken=${payload.registrationToken}">Set your password here</a>
   `;
+
   const emailPayload = {
     to: payload.email,
     subject: "Complete Your Registration",
@@ -30,12 +33,17 @@ const createUser = async (payload) => {
   };
   // send email by calling sendMail function
   await sendMail(emailPayload, constants.mailTypes.setPassword);
+
   const data = {
     firstName: payload.firstName,
     lastName: payload.lastName,
     email: payload.email,
+    registrationToken: payload.registrationToken,
   };
-  return responses.successResponse("User created successfully", 200, data);
+
+  return responses.successResponse("User created successfully", 200, {
+    user: { ...data },
+  });
 };
 
 const setUserPassword = async (payload) => {
@@ -43,48 +51,53 @@ const setUserPassword = async (payload) => {
     registrationToken: payload.registrationToken,
     tokenExpiration: { $gt: Date.now() },
   });
+
   if (!user) {
     return responses.failureResponse("Invalid or Expired Token", 401);
   }
+
   payload.password = await bcrypt.hash(payload.password, 10);
-  const updateAdmin = await Admin.findByIdAndUpdate(
+
+  await Admin.findByIdAndUpdate(
     { _id: user._id },
     { password: payload.password }
   );
+
   user.registrationToken = undefined;
   user.tokenExpiration = undefined;
   await user.save();
-  return responses.successResponse(
-    "Password updated successfully",
-    200,
-    updateAdmin
-  );
+
+  return responses.successResponse("Password updated successfully", 200);
 };
 
 const login = async (payload) => {
-  const foundUser = await Admin.findOne({ email: payload.email });
-  if (!foundUser) {
+  const user = await Admin.findOne({ email: payload.email });
+
+  if (!user) {
     return responses.failureResponse("Email incorrect", 400);
   }
-  const foundPassword = await bcrypt.compare(
-    payload.password,
-    foundUser.password
-  );
+
+  const foundPassword = await bcrypt.compare(payload.password, user.password);
+
   if (!foundPassword) {
     return responses.failureResponse("Password Incorrect", 403);
   }
-  const token = jwt.sign(
+
+  const authToken = jwt.sign(
     {
-      email: foundUser.email,
-      id: foundUser._id,
+      email: user.email,
+      id: user._id,
     },
     process.env.JWT_SECRET,
     {
       expiresIn: "30d",
     }
   );
-  foundUser.accessToken = token;
-  return responses.successResponse("Login successful", 200, foundUser);
+
+  return responses.successResponse("Login successful", 200, {
+    user,
+    authToken,
+  });
 };
 
 module.exports = {
