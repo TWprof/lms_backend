@@ -62,7 +62,7 @@ const userLogin = async (payload) => {
   if (!foundUser) {
     return responses.failureResponse("User details incorrect", 404);
   }
-  if (isVerified !== true) {
+  if (foundUser.isVerified !== true) {
     return responses.failureResponse(
       "Only verified users can login. Please verify your email",
       400
