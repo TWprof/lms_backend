@@ -19,17 +19,22 @@ const PORT = process.env.PORT || 3000;
 //Database
 connectDB(process.env.MONGO_URI);
 seedAdmin();
-
+// CORS OPTIONS
+const corsOptions = {
+  origin: "*",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Access-Control-Allow-Credentials",
+  ],
+};
 //Routes
 app.use(morgan("combined"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(
-  cors({
-    origin: "*",
-    credentials: true,
-  })
-);
+app.use(cors(corsOptions));
 app.use(cookieParser());
 
 app.use("/api/v1", userRoutes);
