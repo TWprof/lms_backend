@@ -4,11 +4,13 @@ const dotenv = require("dotenv");
 const morgan = require("morgan");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const bodyParser = require("body-parser");
 const userRoutes = require("./routes/user.routes");
 const adminRoutes = require("./routes/admin.routes.js");
+const courseRoutes = require("./routes/course.routes.js");
 const connectDB = require("./config/database");
 const swaggerUi = require("swagger-ui-express");
-const swaggerSpec = require("./swaggerSpec.js");
+const swaggerSpec = require("../swaggerSpec.js");
 const seedAdmin = require("./seeding/index.js");
 
 //Environment variables configuration
@@ -36,9 +38,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 app.use(cookieParser());
+app.use(bodyParser.json());
 
 app.use("/api/v1", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/courses", courseRoutes);
 app.get("/", (_req, res) => {
   return res.send(
     "Welcome to Techware Professional Services Learning Platform"
