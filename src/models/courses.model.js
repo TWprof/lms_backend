@@ -6,33 +6,44 @@ const courseSchema = new Mongoose.Schema(
       type: String,
       required: true,
     },
+
     description: {
       type: String,
       required: true,
     },
+
     rating: {
       type: Number,
       default: 0,
     },
-    skills: [
-      {
-        type: String,
-        required: true,
-      },
-    ],
-    thumbnailURL: {
+
+    videoURL: {
       type: String,
       required: true,
     },
+
+    thumbnailURL: {
+      type: String,
+      required: false,
+    },
+
     pricing: {
       type: Number,
     },
+
+    tags: [
+      {
+        type: String,
+      },
+    ],
+
     tutor: {
       type: Mongoose.Types.ObjectId,
       ref: "1", // tutor
       required: true,
     },
   },
+
   {
     timestamps: true,
   }
