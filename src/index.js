@@ -10,6 +10,7 @@ const userRoutes = require("./routes/user.routes");
 const adminRoutes = require("./routes/admin.routes.js");
 const courseRoutes = require("./routes/course.routes.js");
 const uploadRoutes = require("./routes/upload.routes.js");
+const cartRoutes = require("./routes/cart.routes.js");
 const connectDB = require("./config/database");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./swaggerSpec.js");
@@ -47,6 +48,7 @@ app.use("/api/v1", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/courses", courseRoutes);
 app.use("/api/v1/upload", uploadRoutes);
+app.use("/api/v1/cart", cartRoutes);
 app.get("/", (_req, res) => {
   return res.send(
     "Welcome to Techware Professional Services Learning Platform"
