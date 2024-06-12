@@ -11,7 +11,7 @@ const addToCart = async (payload) => {
   }
 
   try {
-    let cartItem = await Cart.findOne({ userId, courseId });
+    const cartItem = await Cart.findOne({ userId, courseId });
     // The course exists, increment the course quantity using mongodb Inc
     if (cartItem) {
       await Cart.updateOne({ userId, courseId }, { $inc: { quantity: 1 } });
@@ -28,6 +28,7 @@ const addToCart = async (payload) => {
       updatedCart
     );
   } catch (error) {
+    console.error("Error adding to cart:", error);
     return responses.failureResponse("Unable to add to cart", 500);
   }
 };

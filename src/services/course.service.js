@@ -59,6 +59,7 @@ const getAllCourses = async (query = {}) => {
       totalCounts,
     });
   } catch (error) {
+    console.error("Error in fetching courses:", error);
     return responses.failureResponse("Failed to fetch all courses", 500);
   }
 };
