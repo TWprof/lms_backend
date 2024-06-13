@@ -15,6 +15,10 @@ const cartSChema = new Mongoose.Schema({
     type: Number,
     default: 1,
   },
+  price: {
+    type: Number,
+    required: true,
+  },
 });
 
 module.exports = Mongoose.model("Cart", cartSChema);
