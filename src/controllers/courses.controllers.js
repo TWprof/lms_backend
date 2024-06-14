@@ -10,6 +10,11 @@ const getAllCoursesControllers = async (req, res) => {
   res.status(data.statusCode).json(data);
 };
 
+const getEachCourseController = async (req, res) => {
+  const { courseId } = req.params;
+  const data = await courseServices.getEachCourse(courseId);
+  res.status(data.statusCode).json(data);
+};
 const rateCourseController = async (req, res) => {
   const data = await courseServices.rateCourse(req.body);
   res.status(data.statusCode).json(data);
@@ -18,5 +23,6 @@ const rateCourseController = async (req, res) => {
 module.exports = {
   createCourseController,
   getAllCoursesControllers,
+  getEachCourseController,
   rateCourseController,
 };

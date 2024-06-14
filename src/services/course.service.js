@@ -23,44 +23,56 @@ const createCourses = async (payload) => {
 
 // Implementing pagination
 const getAllCourses = async (query = {}) => {
-  console.log(query);
-
   try {
     const paginate = {
-      page: 0,
+      page: 1,
       limit: 10,
     };
 
     if (query.page) {
-      paginate.page = query.page;
+      paginate.page = Number(query.page);
       delete query.page;
     }
 
     if (query.limit) {
-      paginate.limit = query.limit;
+      paginate.limit = Number(query.limit);
       delete query.limit;
     }
 
-    console.log({ query });
-
     const courses = await Course.find(query)
-      .skip(paginate.page - 1)
+      .skip((paginate.page - 1) * paginate.limit)
       .limit(paginate.limit)
       .exec();
-
-    console.log(courses);
 
     const totalCounts = await Course.countDocuments(query);
 
     return responses.successResponse("Successfully fetched all courses", 200, {
       data: courses,
-      page: Number(paginate.page),
-      noPerPage: Number(paginate.limit),
+      page: paginate.page,
+      noPerPage: paginate.limit,
       totalCounts,
     });
   } catch (error) {
     console.error("Error in fetching courses:", error);
     return responses.failureResponse("Failed to fetch all courses", 500);
+  }
+};
+
+const getEachCourse = async (courseId) => {
+  try {
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return responses.failureResponse("There is no Course with this ID", 404);
+    }
+
+    return responses.successResponse(
+      "Course fetched successfully",
+      200,
+      course
+    );
+  } catch (error) {
+    console.error("Error in fetching course:", error);
+    return responses.failureResponse("Failed to fetch course", 500);
   }
 };
 
@@ -86,5 +98,6 @@ const rateCourse = async (courseId, newRating) => {
 module.exports = {
   createCourses,
   getAllCourses,
+  getEachCourse,
   rateCourse,
 };
