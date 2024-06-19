@@ -11,6 +11,9 @@ const createCourses = async (payload) => {
       403
     );
   }
+  // to display the tutors name
+  const tutorName = `${admin.firstName} ${admin.lastName}`;
+  payload.tutorName = tutorName;
 
   const newCourse = await Course.create(payload);
 
@@ -76,6 +79,44 @@ const getEachCourse = async (courseId) => {
   }
 };
 
+const updateCourse = async (courseId, payload) => {
+  try {
+    const { whatYouWillLearn } = payload;
+
+    const foundCourse = await Course.findById(courseId);
+    if (!foundCourse) {
+      return responses.failureResponse("CourseId is invalid", 404);
+    }
+
+    const update = {};
+    if (whatYouWillLearn) {
+      update.whatYouWillLearn = whatYouWillLearn;
+    }
+
+    const updatedCourse = await Course.findByIdAndUpdate(
+      courseId,
+      { $set: update },
+      { new: true }
+    );
+
+    if (!updatedCourse) {
+      return responses.failureResponse("Failed to update course", 500);
+    }
+
+    return responses.successResponse(
+      "Course updated successfully",
+      200,
+      updatedCourse
+    );
+  } catch (error) {
+    console.error("An error occurred", error);
+    return responses.failureResponse(
+      "An error occurred while updating the course",
+      500
+    );
+  }
+};
+
 const rateCourse = async (courseId, newRating) => {
   if (newRating < 1 || newRating > 5) {
     return responses.failureResponse("Rating must be between 1 and 5", 400);
@@ -95,9 +136,11 @@ const rateCourse = async (courseId, newRating) => {
     course
   );
 };
+
 module.exports = {
   createCourses,
   getAllCourses,
   getEachCourse,
+  updateCourse,
   rateCourse,
 };
