@@ -1,5 +1,7 @@
 const responses = require("../utility/send.response");
 const Cart = require("../models/cart.model");
+const axios = require("axios");
+const generateReference = require("../utility/payment/generateReference");
 
 // Add a course to the cart
 const addToCart = async (payload) => {
@@ -93,6 +95,24 @@ const removeFromCart = async (payload) => {
       500
     );
   }
+};
+
+const initiatePayment = async (payload) => {
+  const { userId, email } = payload;
+
+  try {
+    const fetchCart = await Cart.find({ userId, status: "pending" });
+    if (!fetchCart.length) {
+      return responses.failureResponse("Cart is empty", 400);
+    }
+
+    const options = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET}`,
+      },
+    };
+  } catch (error) {}
 };
 module.exports = {
   addToCart,

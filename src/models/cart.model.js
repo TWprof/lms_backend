@@ -19,6 +19,14 @@ const cartSChema = new Mongoose.Schema({
     type: Number,
     required: true,
   },
+  status: {
+    type: String,
+    enum: ["pending", "success"],
+    default: "pending",
+  },
+  paymentReference: {
+    type: String,
+  },
 });
 
 module.exports = Mongoose.model("Cart", cartSChema);

@@ -31,15 +31,19 @@ const courseSchema = new Mongoose.Schema(
       type: Number,
     },
 
-    tags: [
-      {
-        type: String,
-      },
-    ],
+    whatYouWillLearn: {
+      type: [String],
+      required: true,
+    },
 
     tutor: {
       type: Mongoose.Types.ObjectId,
       ref: "1", // tutor
+      required: true,
+    },
+
+    tutorName: {
+      type: String,
       required: true,
     },
   },
