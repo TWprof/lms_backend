@@ -4,12 +4,26 @@ const addToCartController = async (req, res) => {
   const data = await cartServices.addToCart(req.body);
   res.status(data.statusCode).json(data);
 };
+
 const removeFromCartController = async (req, res) => {
   const data = await cartServices.removeFromCart(req.body);
+  res.status(data.statusCode).json(data);
+};
+
+const getCartItemsController = async (req, res) => {
+  const { userId } = req.params;
+  const data = await cartServices.getCartItems(userId);
+  res.status(data.statusCode).json(data);
+};
+
+const initializePaymentController = async (req, res) => {
+  const data = await cartServices.initiatePayment(req.body);
   res.status(data.statusCode).json(data);
 };
 
 module.exports = {
   addToCartController,
   removeFromCartController,
+  getCartItemsController,
+  initializePaymentController,
 };
