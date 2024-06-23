@@ -1,20 +1,29 @@
 const responses = require("../utility/send.response");
 const Cart = require("../models/cart.model");
 const Payment = require("../models/payment.model");
+const Course = require("../models/courses.model");
 const axios = require("axios");
 const generateReference = require("../utility/payment/generateReference");
 
 // Add a course to the cart
 const addToCart = async (payload) => {
   //the Payload takes the courseId and the UserId of the student
-  const { userId, courseId, price } = payload;
+  const { userId, courseId } = payload;
 
-  if (!userId || !courseId || price == null) {
+  if (!userId || !courseId) {
     return responses.failureResponse("Id's and price is required", 400);
   }
 
   try {
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return responses.failureResponse("This Course does not exist", 404);
+    }
+
     const cartItem = await Cart.findOne({ userId, courseId });
+
+    const price = course.price;
+
     // The course exists, increment the course quantity using mongodb Inc
     if (cartItem) {
       await Cart.updateOne(
@@ -47,6 +56,7 @@ const addToCart = async (payload) => {
   }
 };
 
+// To remove a course from the cart
 const removeFromCart = async (payload) => {
   //the Payload takes the courseId and the UserId of the student
   const { userId, courseId } = payload;
@@ -98,6 +108,7 @@ const removeFromCart = async (payload) => {
   }
 };
 
+// Get items in the cart
 const getCartItems = async (userId) => {
   if (!userId) {
     return responses.failureResponse("userId is required", 400);
@@ -126,20 +137,22 @@ const getCartItems = async (userId) => {
   }
 };
 
+// Cart checkout and initiate payment
 const initiatePayment = async (payload) => {
-  const { userId, email } = payload;
+  const { userId, email, cartIds } = payload;
 
   try {
-    const fetchCart = await Cart.find({ userId, status: "pending" });
-    if (!fetchCart.length) {
-      return responses.failureResponse("Cart is empty", 400);
-    }
+    let totalCartPrice = 0;
 
-    // to calculate the final price
-    const totalPrice = fetchCart.reduce(
-      (total, item) => total + item.quantity * item.price,
-      0
-    );
+    for (let i = 0; i < cartIds.length; i++) {
+      const cartItem = cartIds[i];
+
+      const cart = await Cart.findById(cartItem);
+
+      const totalPrice = cart.price;
+
+      totalCartPrice += totalPrice;
+    }
 
     const options = {
       headers: {
@@ -150,20 +163,22 @@ const initiatePayment = async (payload) => {
 
     const body = {
       email,
-      amount: totalPrice * 100,
+      amount: totalCartPrice * 100,
       reference: generateReference(),
-      data: {
-        cartId: fetchCart._id,
+      metadata: {
+        cartIds,
         userId,
       },
     };
 
-    const response = await axios.post(process.env.PAYSTACK_URL, body, options);
+    const paystackURL = `${process.env.PAYSTACK_BASE_URL}/transaction/initialize`;
+
+    const response = await axios.post(paystackURL, body, options);
 
     if (response.data.status) {
       const newPayment = new Payment({
         email,
-        amount: totalPrice,
+        amount: totalCartPrice,
         date: new Date().toISOString(),
         status: "pending",
         reference: response.data.data.reference,
@@ -174,15 +189,12 @@ const initiatePayment = async (payload) => {
       await newPayment.save();
 
       // Update cart status to 'initiated'
-      await Cart.updateMany(
-        { userId, status: "pending" },
-        {
-          $set: {
-            status: "initiated",
-            paymentReference: response.data.data.reference,
-          },
-        }
-      );
+      await Cart.findByIdAndUpdate(Cart._id, {
+        $set: {
+          status: "initiated",
+          paymentReference: response.data.data.reference,
+        },
+      });
 
       return responses.successResponse(
         "Payment initialized successfully",
@@ -201,6 +213,9 @@ const initiatePayment = async (payload) => {
     return responses.failureResponse("Error initiating payment", 500);
   }
 };
+
+// webhook endpoint
+
 module.exports = {
   addToCart,
   removeFromCart,

@@ -12,18 +12,19 @@ const paymentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "success"],
+    enum: ["pending", "success", "failed"],
     default: "pending",
   },
   reference: {
     type: String,
   },
-  user: {
+  userId: {
     type: mongoose.Types.ObjectId,
     ref: "Student",
   },
-  ipAdress: {
-    type: String,
+  cartIds: {
+    type: [String],
+    required: true,
   },
   currency: {
     type: String,
