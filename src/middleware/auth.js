@@ -1,53 +1,25 @@
 const jwt = require("jsonwebtoken");
-const Admin = require("../models/admin.model");
+const User = require("../models/user.model");
 
 const authenticate = async (req, res, next) => {
   try {
-    const authorization = req.headers.authorization;
-    if (!authorization || !authorization.startsWith("Bearer ")) {
-      console.log("Authorization header is missing or malformed");
-      return res.status(400).json({
-        message: "Authorization header must start with 'Bearer'",
-        success: false,
-      });
-    }
-    const token = authorization.substring(7);
-    // Verify and decode the token
-    // const decodedUser = jwt.decode(token);
-    const decodedUser = jwt.verify(token, process.env.JWT_SECRET);
+    const token = req.header("Authorization").replace("Bearer ", "");
 
-    if (!decodedUser._id) {
-      console.log("Decoded user is invalid:", decodedUser);
-      return res.status(400).json({
-        message: "Invalid token",
-        success: false,
-      });
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "Access Denied. No token provided." });
     }
 
-    const foundAdmin = await Admin.findOne({ _id: decodedUser._id });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (!foundAdmin) {
-      return res.status(400).json({
-        message: "Admin not found",
-        success: false,
-      });
-    }
+    const user = await User.findOne({ _id: decoded._id });
 
-    if (foundAdmin.role !== "0") {
-      console.log("Found admin is not an authorized role:", foundAdmin.role);
-      return res.status(400).json({
-        message: "Only Admins are allowed",
-        success: false,
-      });
-    }
-
-    req.user = foundAdmin;
+    req.user = user;
     next();
   } catch (error) {
-    console.log("Error in authentication middleware:", error);
-    return res
-      .status(error?.statusCode || 500)
-      .send(error?.message || "Unable to authenticate");
+    console.error("Error", error);
+    res.status(400).json({ message: "Invalid token." });
   }
 };
 

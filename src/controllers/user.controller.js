@@ -30,9 +30,16 @@ const verifyResetPinController = async (req, res) => {
   res.status(data.statusCode).json(data);
 };
 
-// Reset Pin Controller
+// Reset Password Controller
 const resetPasswordController = async (req, res) => {
   const data = await userServices.resetPassword(req.body);
+  res.status(data.statusCode).json(data);
+};
+
+// Get User Courses Controller
+const getUserCoursesController = async (req, res) => {
+  const userId = req.user._id;
+  const data = await userServices.getUserCourses(userId);
   res.status(data.statusCode).json(data);
 };
 
@@ -43,4 +50,5 @@ module.exports = {
   userForgotPasswordController,
   verifyResetPinController,
   resetPasswordController,
+  getUserCoursesController,
 };

@@ -21,7 +21,7 @@ const cartSChema = new Mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "success"],
+    enum: ["pending", "success", "purchased"],
     default: "pending",
   },
 });

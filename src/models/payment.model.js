@@ -32,9 +32,6 @@ const paymentSchema = new mongoose.Schema({
   channel: {
     type: String,
   },
-  transactionId: {
-    type: Number,
-  },
   paidAt: {
     type: Date,
   },
