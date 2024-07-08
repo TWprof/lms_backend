@@ -59,25 +59,28 @@ const addToCart = async (payload) => {
 // To remove a course from the cart
 const removeFromCart = async (payload) => {
   //the Payload takes the courseId and the UserId of the student
-  const { userId, courseId } = payload;
+  const { userId, courseIds } = payload;
 
-  if (!userId || !courseId) {
+  if (!userId || !courseIds || courseIds.length === 0) {
     return responses.failureResponse("Id's are required", 400);
   }
 
   try {
-    const cartItem = await Cart.findOne({ userId, courseId });
+    for (let i = 0; i < courseIds.length; i++) {
+      const courseId = courseIds[i];
+      const cartItem = await Cart.findOne({ userId, courseId });
 
-    if (!cartItem) {
-      return responses.failureResponse("Course isn't found in the cart", 404);
-    }
+      if (!cartItem) {
+        continue;
+      }
 
-    // Remove the course from the cart
-    if (cartItem.quantity > 1) {
-      // Decrement the quantity if it's greater than 1
-      await Cart.updateOne({ userId, courseId }, { $inc: { quantity: -1 } });
-    } else {
-      await Cart.deleteOne({ userId, courseId });
+      // Remove the course from the cart
+      if (cartItem.quantity > 1) {
+        // Decrement the quantity if it's greater than 1
+        await Cart.updateOne({ userId, courseId }, { $inc: { quantity: -1 } });
+      } else {
+        await Cart.deleteOne({ userId, courseId });
+      }
     }
 
     // Fetch the updated cart items for the user
