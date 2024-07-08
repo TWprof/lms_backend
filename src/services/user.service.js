@@ -5,6 +5,7 @@ const responses = require("../utility/send.response");
 const generateResetPin = require("../utility/auth/generateOTP");
 const sendMail = require("../utility/mails/index");
 const constants = require("../constants");
+const PurchasedCourse = require("../models/purchasedCourse.model");
 const crypto = require("crypto");
 
 //Student signup
@@ -59,27 +60,34 @@ const verifySignUp = async (verificationToken) => {
 // Student Login
 const userLogin = async (payload) => {
   const foundUser = await User.findOne({ email: payload.email });
+
   if (!foundUser) {
     return responses.failureResponse("User details incorrect", 404);
   }
+
   if (foundUser.isVerified !== true) {
     return responses.failureResponse(
       "Only verified users can login. Please verify your email",
       400
     );
   }
+
   const userPassword = await bcrypt.compare(
     payload.password,
     foundUser.password
   );
+
   if (!userPassword) {
     return responses.failureResponse("Invalid password", 400);
   }
+
   const returnData = {
     _id: foundUser._id,
     email: foundUser.email,
     isVerified: foundUser.isVerified,
+    firstName: foundUser.firstName,
   };
+
   const authToken = jwt.sign(
     {
       email: foundUser.email,
@@ -90,6 +98,7 @@ const userLogin = async (payload) => {
       expiresIn: "30d",
     }
   );
+
   return responses.successResponse("Login successful", 200, {
     returnData,
     authToken,
@@ -99,34 +108,43 @@ const userLogin = async (payload) => {
 //Password Recovery
 const forgotPassword = async (payload) => {
   const emailFound = await User.findOne({ email: payload.email });
+
   if (!payload || !payload.email) {
     return responses.failureResponse(
       "This field cannot be empty. Please input your email",
       400
     );
   }
+
   if (!emailFound) {
     return responses.failureResponse(
       "Incorrect email! Please check and try again",
       400
     );
   }
+
   const resetPin = generateResetPin();
-  const resetPinExpires = new Date(Date.now() + 300000);
+
+  const resetPinExpires = new Date(Date.now() + 600000);
+
   const updateUser = await User.findByIdAndUpdate(
     { _id: emailFound._id },
     { resetPin: resetPin },
     { resetPinExpires: resetPinExpires },
     { new: true }
   );
+
   const message = `Please use this pin to reset your password ${resetPin}`;
+
   const forgotPasswordPayload = {
     to: updateUser.email,
     subject: "RESET PASSWORD",
     pin: resetPin,
     message: message,
   };
+
   console.log("Sending email to:", updateUser.email);
+
   try {
     await sendMail(forgotPasswordPayload, constants.mailTypes.passwordReset);
   } catch (error) {
@@ -159,16 +177,21 @@ const resetPassword = async (payload) => {
     { email: payload.email }
     // { resetPin: payload.resetPin } // not necessary
   );
+
   if (!user) {
     return responses.failureResponse("Incorrect details", 400);
   }
+
+  // Set the new password
   payload.password = await bcrypt.hash(payload.password, 10);
+
   await User.findByIdAndUpdate(
     { _id: user._id },
     { password: payload.password },
     { resetPin: null },
     { new: true }
   );
+
   const returnData = {
     _id: user._id,
     email: payload.email,
@@ -181,6 +204,19 @@ const resetPassword = async (payload) => {
   );
 };
 
+// User dashboard
+
+const getUserCourses = async (userId) => {
+  try {
+    const courses = await PurchasedCourse.find({ userId }).populate("courseId");
+
+    return responses.successResponse("Your courses are", 200, courses);
+  } catch (error) {
+    console.error("Unable to get courses", error);
+    return responses.failureResponse("Failed to fetch courses", 500);
+  }
+};
+
 module.exports = {
   userSignUp,
   verifySignUp,
@@ -188,4 +224,5 @@ module.exports = {
   forgotPassword,
   verifyResetPin,
   resetPassword,
+  getUserCourses,
 };
