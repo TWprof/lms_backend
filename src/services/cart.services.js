@@ -74,6 +74,11 @@ const removeFromCart = async (payload) => {
         continue;
       }
 
+      if (cartItem.status === "purchased") {
+        await Cart.deleteOne({ userId, courseId });
+        continue;
+      }
+
       // Remove the course from the cart
       if (cartItem.quantity > 1) {
         // Decrement the quantity if it's greater than 1
