@@ -217,6 +217,45 @@ const getUserCourses = async (userId) => {
   }
 };
 
+const getUserOverview = async (userId) => {
+  try {
+    const courses = await PurchasedCourse.find({ userId });
+    if (!courses) {
+      return responses.failureResponse("Invalid User Token", 400);
+    }
+    const totalEnrolledCourses = courses.length;
+
+    const completedCourses = courses.filter(
+      (course) => course.isCompleted
+    ).length;
+
+    const totalWatchTime = courses.reduce((acc, course) => {
+      if (course.isCompleted) {
+        return acc + course.hoursSpent;
+      } else {
+        return acc;
+      }
+    }, 0);
+
+    const courseCompletionRate =
+      totalEnrolledCourses === 0
+        ? 0
+        : (completedCourses / totalEnrolledCourses) * 100;
+
+    const returnData = {
+      courseCompletionRate,
+      totalEnrolledCourses,
+      completedCourses,
+      totalWatchTime,
+    };
+
+    return responses.successResponse("Course details", 200, returnData);
+  } catch (error) {
+    console.error("AN error occured", error);
+    return responses.failureResponse("Failed to fetch statistics", 500);
+  }
+};
+
 module.exports = {
   userSignUp,
   verifySignUp,
@@ -225,4 +264,5 @@ module.exports = {
   verifyResetPin,
   resetPassword,
   getUserCourses,
+  getUserOverview,
 };

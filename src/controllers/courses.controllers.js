@@ -32,10 +32,18 @@ const rateCourseController = async (req, res) => {
   res.status(data.statusCode).json(data);
 };
 
+// Search Course controller
+const findCourseController = async (req, res) => {
+  console.log("Query parameters received:", req.query);
+  const data = await courseServices.findCourse(req.query);
+  res.status(data.statusCode).json(data);
+};
+
 module.exports = {
   createCourseController,
   getAllCoursesControllers,
   getEachCourseController,
   updateCourseController,
   rateCourseController,
+  findCourseController,
 };
