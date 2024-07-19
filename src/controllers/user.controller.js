@@ -36,10 +36,19 @@ const resetPasswordController = async (req, res) => {
   res.status(data.statusCode).json(data);
 };
 
+// User Dashboard
+
 // Get User Courses Controller
 const getUserCoursesController = async (req, res) => {
   const userId = req.user._id;
   const data = await userServices.getUserCourses(userId);
+  res.status(data.statusCode).json(data);
+};
+
+// User Overview statistics
+const getUserOverviewController = async (req, res) => {
+  const userId = req.user._Id;
+  const data = await userServices.getUserOverview(userId);
   res.status(data.statusCode).json(data);
 };
 
@@ -51,4 +60,5 @@ module.exports = {
   verifyResetPinController,
   resetPasswordController,
   getUserCoursesController,
+  getUserOverviewController,
 };

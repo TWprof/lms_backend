@@ -2,6 +2,7 @@ const Course = require("../models/courses.model");
 const responses = require("../utility/send.response");
 const Admin = require("../models/admin.model");
 
+// Endpoint to create a course
 const createCourses = async (payload) => {
   const admin = await Admin.findOne({ _id: payload.tutor });
 
@@ -61,6 +62,7 @@ const getAllCourses = async (query = {}) => {
   }
 };
 
+// Endpoint to get a single course
 const getEachCourse = async (courseId) => {
   try {
     const course = await Course.findById(courseId);
@@ -79,6 +81,7 @@ const getEachCourse = async (courseId) => {
   }
 };
 
+// Endpoint to update the course
 const updateCourse = async (courseId, payload) => {
   try {
     const { whatYouWillLearn } = payload;
@@ -117,6 +120,7 @@ const updateCourse = async (courseId, payload) => {
   }
 };
 
+// Endpoint to rate courses
 const rateCourse = async (courseId, newRating) => {
   if (newRating < 1 || newRating > 5) {
     return responses.failureResponse("Rating must be between 1 and 5", 400);
@@ -137,10 +141,60 @@ const rateCourse = async (courseId, newRating) => {
   );
 };
 
+// Endpoint to search for a course
+const findCourse = async (query) => {
+  try {
+    console.log("query", query);
+    if (!query.search) {
+      return responses.failureResponse("Search query is required", 400);
+    }
+
+    const searchKeyword = {
+      $or: [
+        { title: { $regex: query.search, $options: "i" } },
+        { tutorName: { $regex: query.search, $options: "i" } },
+      ],
+    };
+
+    // Pagination to avoid bulk results
+    const page = query.page ? parseInt(query.page, 10) : 1;
+
+    const limit = query.limit ? parseInt(query.limit, 10) : 10;
+
+    const skip = (page - 1) * limit;
+
+    // Find the courses based on the search keyword
+    const foundCourses = await Course.find(searchKeyword)
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    if (foundCourses.length === 0) {
+      return responses.failureResponse(
+        "Sorry!, No course matches your criteria",
+        404
+      );
+    }
+
+    return responses.successResponse(
+      "Here's what you're looking for",
+      200,
+      foundCourses
+    );
+  } catch (error) {
+    console.error("An error occured", error);
+    return responses.failureResponse(
+      "An error occured while fetching courses",
+      500
+    );
+  }
+};
+
 module.exports = {
   createCourses,
   getAllCourses,
   getEachCourse,
   updateCourse,
   rateCourse,
+  findCourse,
 };
