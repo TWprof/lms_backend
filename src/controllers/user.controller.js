@@ -45,10 +45,30 @@ const getUserCoursesController = async (req, res) => {
   res.status(data.statusCode).json(data);
 };
 
+// Get Each User Course Controller
+const getEachUserCourseController = async (req, res) => {
+  const { courseId } = req.params;
+  const data = await userServices.getEachCourse(courseId);
+  res.status(data.statusCode).json(data);
+};
+
 // User Overview statistics
 const getUserOverviewController = async (req, res) => {
   const userId = req.user._Id;
   const data = await userServices.getUserOverview(userId);
+  res.status(data.statusCode).json(data);
+};
+
+// User recommendations
+const getUserRecommendationsController = async (req, res) => {
+  const userId = req.user._id;
+  const { page, limit, type } = req.query;
+  const data = await userServices.getUserRecommendations(
+    userId,
+    parseInt(page) || 1,
+    parseInt(limit) || 10,
+    type || "random"
+  );
   res.status(data.statusCode).json(data);
 };
 
@@ -60,5 +80,7 @@ module.exports = {
   verifyResetPinController,
   resetPasswordController,
   getUserCoursesController,
+  getEachUserCourseController,
   getUserOverviewController,
+  getUserRecommendationsController,
 };

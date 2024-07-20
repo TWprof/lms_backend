@@ -6,8 +6,10 @@ const generateResetPin = require("../utility/auth/generateOTP");
 const sendMail = require("../utility/mails/index");
 const constants = require("../constants");
 const PurchasedCourse = require("../models/purchasedCourse.model");
+const Course = require("../models/courses.model");
 const crypto = require("crypto");
 
+// User Authentication
 //Student signup
 const userSignUp = async (payload) => {
   const foundUser = await User.findOne({ email: payload.email });
@@ -205,7 +207,7 @@ const resetPassword = async (payload) => {
 };
 
 // User dashboard
-
+// Get the courses that has been purchased by the user
 const getUserCourses = async (userId) => {
   try {
     const courses = await PurchasedCourse.find({ userId }).populate("courseId");
@@ -217,42 +219,123 @@ const getUserCourses = async (userId) => {
   }
 };
 
+// Get Each User Course
+const getEachCourse = async (courseId) => {
+  try {
+    const course = await PurchasedCourse.findOne({ courseId }).populate(
+      "courseId"
+    );
+    if (!course) {
+      return responses.failureResponse("There is no Course with this ID", 404);
+    }
+
+    return responses.successResponse(
+      "Course fetched successfully",
+      200,
+      course
+    );
+  } catch (error) {
+    console.error("Error in fetching course:", error);
+    return responses.failureResponse("Failed to fetch course", 500);
+  }
+};
+
+// user statistics displayed on the dashboard
 const getUserOverview = async (userId) => {
   try {
     const courses = await PurchasedCourse.find({ userId });
     if (!courses) {
       return responses.failureResponse("Invalid User Token", 400);
     }
+
     const totalEnrolledCourses = courses.length;
 
     const completedCourses = courses.filter(
-      (course) => course.isCompleted
+      (course) => course.isCompleted === 1
     ).length;
 
-    const totalWatchTime = courses.reduce((acc, course) => {
-      if (course.isCompleted) {
-        return acc + course.hoursSpent;
-      } else {
-        return acc;
-      }
-    }, 0);
+    const totalWatchTimeMinutes = courses.reduce(
+      (acc, course) => acc + course.minutesSpent,
+      0
+    );
+    const totalWatchTimeHours = (totalWatchTimeMinutes / 60).toFixed(2);
 
-    const courseCompletionRate =
-      totalEnrolledCourses === 0
-        ? 0
-        : (completedCourses / totalEnrolledCourses) * 100;
+    let courseCompletionRate;
+    if (totalEnrolledCourses === 0) {
+      courseCompletionRate = 0;
+    } else {
+      courseCompletionRate = (completedCourses / totalEnrolledCourses) * 100;
+    }
 
     const returnData = {
       courseCompletionRate,
       totalEnrolledCourses,
       completedCourses,
-      totalWatchTime,
+      totalWatchTime: totalWatchTimeHours,
     };
 
     return responses.successResponse("Course details", 200, returnData);
   } catch (error) {
     console.error("AN error occured", error);
     return responses.failureResponse("Failed to fetch statistics", 500);
+  }
+};
+
+// to recommend more courses to the user
+const getUserRecommendations = async (payload) => {
+  try {
+    const { userId, page = 1, limit = 10, type = "random" } = payload;
+    const offset = (page - 1) * limit;
+
+    let query = Course.find();
+    if (type === "related") {
+      const userCourses = await PurchasedCourse.find({ userId }).populate(
+        "courseId"
+      );
+
+      const categories = userCourses.map((course) => course.courseId.category);
+
+      // to recommend courses from the same category
+      query = (await query.where("category")).in(categories);
+    } else if (type === "different") {
+      const userCourses = await PurchasedCourse.find({ userId }).populate(
+        "courseId"
+      );
+
+      const categories = userCourses.map((course) => course.courseId.category);
+
+      // to recommend courses from different categories
+      query = (await query.where("category")).nin(categories);
+    } else if (type === "sameTutor") {
+      const userCourses = await PurchasedCourse.find({ userId }).populate(
+        "courseId"
+      );
+
+      const tutors = userCourses.map((course) => course.courseId.tutor);
+
+      // to recommend courses from the same tutor
+      query = (await query.where("tutor")).in(tutors);
+    }
+
+    const totalCourses = await query.clone().countDocuments();
+
+    const courses = await query.skip(offset).limit(limit).exec();
+
+    const returnData = {
+      courses,
+      page,
+      totalPages: Math.ceil(totalCourses / limit),
+      totalCourses,
+    };
+
+    return responses.successResponse(
+      "Your recommended courses are: ",
+      200,
+      returnData
+    );
+  } catch (error) {
+    console.error("An error occured", error);
+    return responses.failureResponse("Unable to recommend courses", 500);
   }
 };
 
@@ -264,5 +347,7 @@ module.exports = {
   verifyResetPin,
   resetPassword,
   getUserCourses,
+  getEachCourse,
   getUserOverview,
+  getUserRecommendations,
 };
