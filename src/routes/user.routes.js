@@ -36,4 +36,19 @@ router.get(
   authMiddleware.authenticate,
   userController.getUserOverviewController
 );
+
+// recommendations route
+router.get(
+  "/recommendations",
+  authMiddleware.authenticate,
+  userController.getUserRecommendationsController
+);
+
+// get a single purchased course by user
+router.get(
+  "/dashboard/:courseId",
+  authMiddleware.authenticate,
+  userController.getEachUserCourseController
+);
+
 module.exports = router;

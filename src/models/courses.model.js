@@ -12,19 +12,29 @@ const courseSchema = new Mongoose.Schema(
       required: true,
     },
 
-    rating: {
-      type: Number,
-      default: 0,
-    },
-
-    videoURL: {
-      type: String,
-      required: true,
-    },
-
     thumbnailURL: {
       type: String,
       required: false,
+    },
+
+    videoURL: {
+      type: [String],
+      required: true,
+    },
+
+    basicInformation: {
+      language: {
+        type: String,
+        required: true,
+      },
+      level: {
+        type: String,
+        required: true,
+      },
+      category: {
+        type: String,
+        required: true,
+      },
     },
 
     price: {
@@ -34,6 +44,16 @@ const courseSchema = new Mongoose.Schema(
     whatYouWillLearn: {
       type: [String],
       required: true,
+    },
+
+    lectureTitle: {
+      lectureDescription: {
+        type: String,
+      },
+      video: {
+        type: [String],
+        required: false,
+      },
     },
 
     tutor: {
@@ -46,8 +66,12 @@ const courseSchema = new Mongoose.Schema(
       type: String,
       required: true,
     },
-  },
 
+    rating: {
+      type: Number,
+      default: 0,
+    },
+  },
   {
     timestamps: true,
   }

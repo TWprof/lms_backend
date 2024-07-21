@@ -11,17 +11,17 @@ const purchasedCourseSchema = new Mongoose.Schema({
     ref: "Course",
     required: true,
   },
-  purchaseDate: {
-    type: Date,
-    default: Date.now,
-  },
   isCompleted: {
     type: Number,
     default: 0,
   },
-  hoursSpent: {
+  minutesSpent: {
     type: Number,
     default: 0,
+  },
+  purchaseDate: {
+    type: Date,
+    default: Date.now,
   },
 });
 
