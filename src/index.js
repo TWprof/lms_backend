@@ -27,7 +27,7 @@ connectDB(process.env.MONGO_URI);
 seedAdmin();
 // CORS OPTIONS
 const corsOptions = {
-  origin: "https://api.techware.com.ng/api/v1/",
+  origin: true,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowHeaders: [
