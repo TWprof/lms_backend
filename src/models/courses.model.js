@@ -49,6 +49,7 @@ const courseSchema = new Mongoose.Schema(
     lectureTitle: {
       lectureDescription: {
         type: String,
+        required: false,
       },
       video: {
         type: [String],

@@ -63,6 +63,12 @@ const paystackWebhook = async (payload) => {
           await Cart.findByIdAndUpdate(cartId, { status: "purchased" });
         }
 
+        const cartItem = await Cart.findOne({ userId });
+
+        if (cartItem.status === "purchased") {
+          await Cart.deleteOne({ userId });
+        }
+
         return responses.successResponse("Transaction verified and noted", 200);
       } else {
         return responses.failureResponse("Payment verification failed", 500);
