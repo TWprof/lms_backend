@@ -24,7 +24,7 @@ const sendEmail = async (option, type) => {
   }
 
   const emailOptions = {
-    from: "TECHWARE SERVICES<mabel@techware.ng>",
+    from: "TECHWARE SERVICES<info@techware.ng>",
     to: option.to,
     subject,
   };
