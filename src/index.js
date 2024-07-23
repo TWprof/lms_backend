@@ -31,10 +31,10 @@ const corsOptions = {
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowHeaders: [
-    "Content-Type",
+    // "Content-Type",
     "Authorization",
     "Access-Control-Allow-Credentials",
-    "Access-Control-Allow-Origin",
+    // "Access-Control-Allow-Origin",
   ],
 };
 //Routes
