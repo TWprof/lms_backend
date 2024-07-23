@@ -27,7 +27,7 @@ connectDB(process.env.MONGO_URI);
 seedAdmin();
 // CORS OPTIONS
 const corsOptions = {
-  origin: ["http://localhost:3000", "https://lms-frontend-psi.vercel.app/"],
+  origin: "https://lms-frontend-psi.vercel.app/",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowHeaders: [
