@@ -37,7 +37,10 @@ const addToCart = async (payload) => {
     }
 
     // Fetch the cart items for the user
-    const updatedCart = await Cart.find({ userId });
+    const updatedCart = await Cart.find({ userId }).populate({
+      path: "courseId",
+      select: "title rating thumbnailURL tutorName",
+    });
 
     // calculate the total price
     const totalPrice = updatedCart.reduce(
@@ -59,13 +62,13 @@ const addToCart = async (payload) => {
 // To remove a course from the cart
 const removeFromCart = async (payload) => {
   //the Payload takes the courseId and the UserId of the student
-  const { userId, courseIds } = payload;
-
-  if (!userId || !courseIds || courseIds.length === 0) {
-    return responses.failureResponse("Id's are required", 400);
-  }
-
   try {
+    const { userId, courseIds } = payload;
+
+    if (!userId || !courseIds || courseIds.length === 0) {
+      return responses.failureResponse("Id's are required", 400);
+    }
+
     for (let i = 0; i < courseIds.length; i++) {
       const courseId = courseIds[i];
       const cartItem = await Cart.findOne({ userId, courseId });
@@ -89,7 +92,11 @@ const removeFromCart = async (payload) => {
     }
 
     // Fetch the updated cart items for the user
-    const updatedCartItems = await Cart.find({ userId });
+    const updatedCartItems = await Cart.find({ userId }).populate({
+      path: "courseId",
+      select: "title rating thumbnailURL tutorName",
+    });
+
     if (updatedCartItems.length === 0) {
       return responses.successResponse("Cart is now empty", 200, {
         updatedCartItems,
