@@ -48,7 +48,6 @@ const addToCart = async (payload) => {
 
     return responses.successResponse("Here are your cart items", 200, {
       updatedCart,
-      course,
       totalPrice,
     });
   } catch (error) {
@@ -119,17 +118,15 @@ const removeFromCart = async (payload) => {
 
 // Get items in the cart
 const getCartItems = async (userId) => {
-  if (!userId) {
-    return responses.failureResponse("userId is required", 400);
-  }
-
   try {
-    const cartItems = await Cart.find({ userId });
+    const cartItems = await Cart.find({ userId }).populate({
+      path: "courseId",
+      select: "title rating thumbnailURL tutorName",
+    });
 
     if (cartItems.length === 0) {
       return responses.failureResponse("Cart is empty", 404);
     }
-
     // Calculate the total price
     const totalPrice = cartItems.reduce(
       (total, item) => total + item.quantity * item.price,
