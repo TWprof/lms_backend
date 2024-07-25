@@ -48,6 +48,7 @@ const addToCart = async (payload) => {
 
     return responses.successResponse("Here are your cart items", 200, {
       updatedCart,
+      course,
       totalPrice,
     });
   } catch (error) {
