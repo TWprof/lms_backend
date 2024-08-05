@@ -4,10 +4,18 @@ const cartController = require("../controllers/cart.controller");
 const authMiddleware = require("../middleware/auth");
 
 // // Route to add item to cart
-router.post("/add", cartController.addToCartController);
+router.post(
+  "/add",
+  authMiddleware.authenticate,
+  cartController.addToCartController
+);
 
 // // Route to remove item from cart
-router.post("/remove", cartController.removeFromCartController);
+router.post(
+  "/remove",
+  authMiddleware.authenticate,
+  cartController.removeFromCartController
+);
 
 // // Route to get all items in the cart
 router.get(
