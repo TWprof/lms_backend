@@ -109,45 +109,45 @@ const userLogin = async (payload) => {
 
 //Password Recovery
 const forgotPassword = async (payload) => {
-  const emailFound = await User.findOne({ email: payload.email });
-
-  if (!payload || !payload.email) {
-    return responses.failureResponse(
-      "This field cannot be empty. Please input your email",
-      400
-    );
-  }
-
-  if (!emailFound) {
-    return responses.failureResponse(
-      "Incorrect email! Please check and try again",
-      400
-    );
-  }
-
-  const resetPin = generateResetPin();
-
-  const resetPinExpires = new Date(Date.now() + 600000);
-
-  const updateUser = await User.findByIdAndUpdate(
-    { _id: emailFound._id },
-    { resetPin: resetPin },
-    { resetPinExpires: resetPinExpires },
-    { new: true }
-  );
-
-  const message = `Please use this pin to reset your password ${resetPin}`;
-
-  const forgotPasswordPayload = {
-    to: updateUser.email,
-    subject: "RESET PASSWORD",
-    pin: resetPin,
-    message: message,
-  };
-
-  console.log("Sending email to:", updateUser.email);
-
   try {
+    const emailFound = await User.findOne({ email: payload.email });
+
+    if (!payload || !payload.email) {
+      return responses.failureResponse(
+        "This field cannot be empty. Please input your email",
+        400
+      );
+    }
+
+    if (!emailFound) {
+      return responses.failureResponse(
+        "Incorrect email! Please check and try again",
+        400
+      );
+    }
+
+    const resetPin = generateResetPin();
+
+    const resetPinExpires = new Date(Date.now() + 600000);
+
+    const updateUser = await User.findByIdAndUpdate(
+      { _id: emailFound._id },
+      { resetPin: resetPin },
+      { resetPinExpires: resetPinExpires },
+      { new: true }
+    );
+
+    const message = `Please use this pin to reset your password ${resetPin}`;
+
+    const forgotPasswordPayload = {
+      to: updateUser.email,
+      subject: "RESET PASSWORD",
+      pin: resetPin,
+      message: message,
+    };
+
+    console.log("Sending email to:", updateUser.email);
+
     await sendMail(forgotPasswordPayload, constants.mailTypes.passwordReset);
   } catch (error) {
     console.error("Failed to send mail:", error);
@@ -210,6 +210,7 @@ const resetPassword = async (payload) => {
 // Get the courses that has been purchased by the user
 const getUserCourses = async (userId) => {
   try {
+    console.log("Fetching courses for user:", userId);
     const courses = await PurchasedCourse.find({ userId }).populate("courseId");
 
     return responses.successResponse("Your courses are", 200, courses);
