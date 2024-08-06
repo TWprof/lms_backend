@@ -1,0 +1,27 @@
+name: Deploying to EC2 Instance
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  remote-command:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Run remote command via SSH
+      uses: D3rHase/ssh-command-action@latest
+      with:
+        host: ${{ secrets.HOST }}
+        port: ${{ secrets.PORT }}
+        user: ${{ secrets.USER }}
+        private_key: ${{ secrets.PRIVATE_KEY }}
+        command: |
+          cd /home/ubuntu/lms_backend
+          git pull origin main
+          cd /home/ubuntu/
+          forever restart lms_backend/index.js
