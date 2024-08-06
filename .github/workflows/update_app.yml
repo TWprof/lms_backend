@@ -20,6 +20,7 @@ jobs:
         port: ${{ secrets.PORT }}
         user: ${{ secrets.USER }}
         private_key: ${{ secrets.PRIVATE_KEY }}
+        host_fingerprint: ${{ secrets.HOST_FINGERPRINT }}
         command: |
           cd /home/ubuntu/lms_backend
           git pull origin main
