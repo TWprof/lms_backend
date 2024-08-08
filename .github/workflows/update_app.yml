@@ -21,7 +21,6 @@ jobs:
           private_key: ${{ secrets.PRIVATE_KEY }}
           host_fingerprint: ${{ secrets.HOST_FINGERPRINT }}
           command: |
-            echo "Connected successfully, running commands now"
             git -C /home/ubuntu/lms_backend/ pull origin main
             forever restart lms_backend/src/index.js
             
