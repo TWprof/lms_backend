@@ -20,8 +20,4 @@ jobs:
           user: ${{ secrets.USER }}
           private_key: ${{ secrets.PRIVATE_KEY }}
           host_fingerprint: ${{ secrets.HOST_FINGERPRINT }}
-          command: |
-            cd /home/ubuntu/lms_backend
-            git pull origin main
-            cd /home/ubuntu/
-            forever restart lms_backend/index.js
+          command: echo "Hello Abdul, I am there now" >> githubaction.txt
