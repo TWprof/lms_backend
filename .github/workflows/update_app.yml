@@ -21,4 +21,5 @@ jobs:
           private_key: ${{ secrets.PRIVATE_KEY }}
           host_fingerprint: ${{ secrets.HOST_FINGERPRINT }}
           command: |
+            cd /home/ubuntu/lms_backend
             echo "Hello Abdul, I am there now" >> githubaction1.txt
