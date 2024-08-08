@@ -20,4 +20,5 @@ jobs:
           user: ${{ secrets.USER }}
           private_key: ${{ secrets.PRIVATE_KEY }}
           host_fingerprint: ${{ secrets.HOST_FINGERPRINT }}
-          command: echo "Hello Abdul, I am there now" >> githubaction.txt
+          command: |
+            echo "Hello Abdul, I am there now" >> githubaction1.txt
