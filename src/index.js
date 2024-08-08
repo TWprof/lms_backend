@@ -54,7 +54,7 @@ app.use("/api/v1/cart", cartRoutes);
 app.use("/api/v1", webhookRoutes);
 app.get("/", (_req, res) => {
   return res.send(
-    "Welcome to Techware Professional Services Learning Platform"
+    "Testing fot CD configurations"
   );
 });
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
