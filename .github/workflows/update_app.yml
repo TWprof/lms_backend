@@ -19,7 +19,7 @@ jobs:
           user: ${{ secrets.USER }}
           private_key: ${{ secrets.PRIVATE_KEY }}
           host_fingerprint: ${{ secrets.HOST_FINGERPRINT }}
-          command: |
+          command:
             git -C ~/lms_backend/ pull origin main
             forever restart ~/lms_backend/src/index.js
             
