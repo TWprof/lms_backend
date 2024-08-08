@@ -21,6 +21,9 @@ jobs:
           private_key: ${{ secrets.PRIVATE_KEY }}
           host_fingerprint: ${{ secrets.HOST_FINGERPRINT }}
           command: |
-            echo "Hello Abdul, I am there now" >> githubaction2.txt
+            echo "Connected successfully, running commands now"
             cd /home/ubuntu/lms_backend
+            git pull
+            cd /home/ubuntu
+            forever restart lms_backend/src/index.js
             
