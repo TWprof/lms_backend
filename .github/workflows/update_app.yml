@@ -37,7 +37,8 @@ jobs:
             private_key: ${{ secrets.PRIVATE_KEY }}
             host_fingerprint: ${{ secrets.HOST_FINGERPRINT }}
             command: |
-              forever restart ~/lms_backend/src/index.js
+              forever stop ~/lms_backend/src/index.js
+              forever start ~/lms_backend/src/index.js
               
 
               
