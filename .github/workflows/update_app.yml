@@ -22,7 +22,6 @@ jobs:
           host_fingerprint: ${{ secrets.HOST_FINGERPRINT }}
           command: |
             echo "Connected successfully, running commands now"
-            cd /home/ubuntu/lms_backend && git pull
-            cd /home/ubuntu
+            git -C lms_backend pull
             forever restart lms_backend/src/index.js
             
