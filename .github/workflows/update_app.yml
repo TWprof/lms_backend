@@ -37,7 +37,7 @@ jobs:
             private_key: ${{ secrets.PRIVATE_KEY }}
             host_fingerprint: ${{ secrets.HOST_FINGERPRINT }}
             command: |
-              forever start ~/lms_backend/src/index.js
+              sudo systemctl restart lms-app
               
 
               
