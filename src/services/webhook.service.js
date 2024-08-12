@@ -63,11 +63,13 @@ const paystackWebhook = async (payload) => {
           await Cart.findByIdAndUpdate(cartId, { status: "purchased" });
         }
 
-        const cartItem = await Cart.findOne({ userId });
+        // const cartItem = await Cart.findOne({ userId });
 
-        if (cartItem.status === "purchased") {
-          await Cart.deleteMany({ userId });
-        }
+        // if (cartItem.status === "purchased") {
+        //   await Cart.deleteMany({ userId });
+        // }
+        // Clear cart of item purchased
+        await Cart.deleteMany({ userId, status: "purchased" });
 
         return responses.successResponse("Transaction verified and noted", 200);
       } else {

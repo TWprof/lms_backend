@@ -51,4 +51,18 @@ router.get(
   userController.getEachUserCourseController
 );
 
+// User profile settings //
+// Update user
+router.put(
+  "/update-user",
+  authMiddleware.authenticate,
+  userController.updateUserController
+);
+
+// Update user password
+router.put(
+  "/update-password",
+  authMiddleware.authenticate,
+  userController.updatePasswordController
+);
 module.exports = router;

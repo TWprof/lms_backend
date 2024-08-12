@@ -227,8 +227,6 @@ const initiatePayment = async (payload) => {
   }
 };
 
-// webhook endpoint
-
 module.exports = {
   addToCart,
   removeFromCart,

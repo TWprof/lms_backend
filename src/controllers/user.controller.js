@@ -72,6 +72,21 @@ const getUserRecommendationsController = async (req, res) => {
   res.status(data.statusCode).json(data);
 };
 
+// User settings //
+// Update user profile controller
+const updateUserController = async (req, res) => {
+  const userId = req.user._id;
+  const data = await userServices.updateUser(userId, req.body);
+  res.status(data.statusCode).json(data);
+};
+
+// Update user password controller
+const updatePasswordController = async (req, res) => {
+  const userId = req.user._id;
+  const data = await userServices.updatePassword(userId, req.body);
+  res.status(data.statusCode).json(data);
+};
+
 module.exports = {
   userSignUpController,
   verifyUserEmailController,
@@ -83,4 +98,6 @@ module.exports = {
   getEachUserCourseController,
   getUserOverviewController,
   getUserRecommendationsController,
+  updateUserController,
+  updatePasswordController,
 };

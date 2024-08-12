@@ -210,7 +210,6 @@ const resetPassword = async (payload) => {
 // Get the courses that has been purchased by the user
 const getUserCourses = async (userId) => {
   try {
-    console.log("Fetching courses for user:", userId);
     const courses = await PurchasedCourse.find({ userId }).populate("courseId");
 
     return responses.successResponse("Your courses are", 200, courses);
@@ -340,6 +339,69 @@ const getUserRecommendations = async (payload) => {
   }
 };
 
+// User Settings
+// user update profile endpoint
+const updateUser = async (userId, payload) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return responses.failureResponse("Invalid user token/Id", 400);
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, payload, {
+      new: true,
+    });
+
+    return responses.successResponse(
+      "User details updated successfully",
+      200,
+      updatedUser
+    );
+  } catch (error) {
+    console.error("There was an error updating this user", error);
+    return responses.failureResponse("Unable to update user", 500);
+  }
+};
+
+// Update User password
+const updatePassword = async (userId, payload) => {
+  try {
+    const { oldPassword, newPassword } = payload;
+    const user = await User.findById(userId);
+    if (!user) {
+      return responses.failureResponse(
+        "Invalid user token. There is no user with this Id",
+        400
+      );
+    }
+
+    // Check if the old password is correct by comparing
+    const foundPassword = await bcrypt.compare(oldPassword, user.password);
+    if (!foundPassword) {
+      return responses.failureResponse("This password is incorrect", 400);
+    }
+
+    // Hash the new password
+    const newpassword = await bcrypt.hash(newPassword, 10);
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { password: newpassword },
+      { new: true }
+    );
+
+    return responses.successResponse(
+      "User password updated successfully",
+      updatedUser
+    );
+  } catch (error) {
+    console.error("Unable to update the password", error);
+    return responses.failureResponse(
+      "There was an error updating the user password",
+      500
+    );
+  }
+};
+
 module.exports = {
   userSignUp,
   verifySignUp,
@@ -351,4 +413,6 @@ module.exports = {
   getEachCourse,
   getUserOverview,
   getUserRecommendations,
+  updateUser,
+  updatePassword,
 };
