@@ -367,7 +367,9 @@ const updateUser = async (userId, payload) => {
 const updatePassword = async (userId, payload) => {
   try {
     const { oldPassword, newPassword } = payload;
+
     const user = await User.findById(userId);
+
     if (!user) {
       return responses.failureResponse(
         "Invalid user token. There is no user with this Id",
@@ -375,14 +377,17 @@ const updatePassword = async (userId, payload) => {
       );
     }
 
-    // Check if the old password is correct by comparing
+    // Check if the old password is correct
     const foundPassword = await bcrypt.compare(oldPassword, user.password);
+
     if (!foundPassword) {
+      console.log("Password does not match");
       return responses.failureResponse("This password is incorrect", 400);
     }
 
-    // Hash the new password
+    // set new password and hash it
     const newpassword = await bcrypt.hash(newPassword, 10);
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { password: newpassword },
@@ -391,6 +396,7 @@ const updatePassword = async (userId, payload) => {
 
     return responses.successResponse(
       "User password updated successfully",
+      200,
       updatedUser
     );
   } catch (error) {
