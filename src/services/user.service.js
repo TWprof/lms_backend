@@ -160,6 +160,7 @@ const forgotPassword = async (payload) => {
   return responses.successResponse("Reset pin sent successfully", 200, {});
 };
 
+// verify the reset pin
 const verifyResetPin = async (payload) => {
   const user = await User.findOne({ resetPin: payload.resetPin });
   if (!payload || !payload.resetPin) {
@@ -174,6 +175,7 @@ const verifyResetPin = async (payload) => {
   return responses.successResponse("Reset Pin still valid", 200);
 };
 
+// set new password
 const resetPassword = async (payload) => {
   const user = await User.findOne(
     { email: payload.email }

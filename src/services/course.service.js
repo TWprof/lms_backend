@@ -122,23 +122,31 @@ const updateCourse = async (courseId, payload) => {
 
 // Endpoint to rate courses
 const rateCourse = async (courseId, newRating) => {
-  if (newRating < 1 || newRating > 5) {
-    return responses.failureResponse("Rating must be between 1 and 5", 400);
-  }
+  try {
+    if (newRating < 1 || newRating > 5) {
+      return responses.failureResponse("Rating must be between 1 and 5", 400);
+    }
 
-  const course = await Course.findById(courseId);
-  if (!course) {
-    return responses.failureResponse("Course not found", 404);
-  }
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return responses.failureResponse("Course not found", 404);
+    }
 
-  const currentRating = course.rating;
-  course.rating = (currentRating + parseFloat(newRating)) / 2;
-  await course.save();
-  return responses.successResponse(
-    "Course rating updated successflly",
-    200,
-    course
-  );
+    const currentRating = course.rating || 0;
+
+    course.rating = (currentRating + parseFloat(newRating)) / 2;
+
+    await course.save();
+
+    return responses.successResponse(
+      "Course rating updated successflly",
+      200,
+      course
+    );
+  } catch (error) {
+    console.error("There was an error rating this course", error);
+    return responses.failureResponse("Unable to rate course", 500);
+  }
 };
 
 // Endpoint to search for a course

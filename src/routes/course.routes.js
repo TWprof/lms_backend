@@ -18,7 +18,7 @@ router.put(
 );
 
 // Route to rate a course by courseID
-// router.post("/:courseId/rate", courseControllers.rateCourseController);
+router.post("/:courseId/rate", courseControllers.rateCourseController);
 
 // Route to get a single course
 router.get("/:courseId", courseControllers.getEachCourseController);
