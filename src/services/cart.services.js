@@ -197,18 +197,27 @@ const initiatePayment = async (payload) => {
         reference: response.data.data.reference,
         user: userId,
         currency: "NGN",
+        cartIds: cartIds,
       });
 
       await newPayment.save();
 
       // Update cart status to 'initiated'
-      await Cart.findByIdAndUpdate(Cart._id, {
-        $set: {
-          status: "initiated",
-          paymentReference: response.data.data.reference,
-        },
-      });
-
+      // await Cart.findByIdAndUpdate(Cart._id, {
+      //   $set: {
+      //     status: "initiated",
+      //     paymentReference: response.data.data.reference,
+      //   },
+      // });
+      await Cart.updateMany(
+        { _id: { $in: cartIds } },
+        {
+          $set: {
+            status: "initiated",
+            paymentReference: response.data.data.reference,
+          },
+        }
+      );
       return responses.successResponse(
         "Payment initialized successfully",
         200,

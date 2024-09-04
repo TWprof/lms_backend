@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
+const Admin = require("../models/admin.model");
 
 const authenticate = async (req, res, next) => {
   try {
@@ -13,9 +14,21 @@ const authenticate = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findOne({ _id: decoded._id });
+    let user = await User.findOne({ _id: decoded.id });
+
+    if (!user) {
+      user = await Admin.findOne({ _id: decoded.id });
+    }
+
+    if (!user) {
+      return res
+        .status(401)
+        .json({ message: "User not found or unauthorized." });
+    }
 
     req.user = user;
+    req.role = user.role;
+
     next();
   } catch (error) {
     console.error("Error", error);
