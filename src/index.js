@@ -7,6 +7,7 @@ const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const fileUpload = require("express-fileupload");
 const userRoutes = require("./routes/user.routes");
+const tutorRoutes = require("./routes/tutor.routes");
 const adminRoutes = require("./routes/admin.routes.js");
 const courseRoutes = require("./routes/course.routes.js");
 const uploadRoutes = require("./routes/upload.routes.js");
@@ -47,6 +48,7 @@ app.use(bodyParser.json());
 app.use(fileUpload({ useTempFiles: true, tempFileDir: "/tmp/" }));
 
 app.use("/api/v1", userRoutes);
+app.use("/api/v1/tutor", tutorRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/courses", courseRoutes);
 app.use("/api/v1/upload", uploadRoutes);
