@@ -202,22 +202,29 @@ const initiatePayment = async (payload) => {
 
       await newPayment.save();
 
-      // Update cart status to 'initiated'
-      // await Cart.findByIdAndUpdate(Cart._id, {
-      //   $set: {
-      //     status: "initiated",
-      //     paymentReference: response.data.data.reference,
-      //   },
-      // });
-      await Cart.updateMany(
-        { _id: { $in: cartIds } },
-        {
-          $set: {
-            status: "initiated",
-            paymentReference: response.data.data.reference,
-          },
-        }
-      );
+      // Update cart status based on the number of items
+      if (cartIds.length === 1) {
+        await Cart.updateOne(
+          { _id: cartIds[0] },
+          {
+            $set: {
+              status: "initiated",
+              paymentReference: response.data.data.reference,
+            },
+          }
+        );
+      } else {
+        await Cart.updateMany(
+          { _id: { $in: cartIds } },
+          {
+            $set: {
+              status: "initiated",
+              paymentReference: response.data.data.reference,
+            },
+          }
+        );
+      }
+
       return responses.successResponse(
         "Payment initialized successfully",
         200,

@@ -14,7 +14,7 @@ const authenticate = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    let user = await User.findOne({ _id: decoded.id });
+    let user = await User.findOne({ _id: decoded._id });
 
     if (!user) {
       user = await Admin.findOne({ _id: decoded.id });
