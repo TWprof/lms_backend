@@ -23,7 +23,7 @@ const createUser = async (payload) => {
   const message = `
   <h1>Set password</h1>
             <p> Follow this link to set your password and you can proceed to login:</p>
-            <a href="${process.env.ADMIN_HOST}set-password?registrationToken=${payload.registrationToken}">Set your password here</a>
+            <a href="${process.env.ADMIN_HOST_FRONTEND}set-password?registrationToken=${payload.registrationToken}">Set your password here</a>
   `;
 
   const emailPayload = {
