@@ -7,14 +7,14 @@ const generateReference = require("../utility/payment/generateReference");
 
 // Add a course to the cart
 const addToCart = async (payload) => {
-  //the Payload takes the courseId and the UserId of the student
-  const { userId, courseId } = payload;
-
-  if (!userId || !courseId) {
-    return responses.failureResponse("Id's and price is required", 400);
-  }
-
   try {
+    //the Payload takes the courseId and the UserId of the student
+    const { userId, courseId } = payload;
+
+    if (!userId || !courseId) {
+      return responses.failureResponse("Id's and price is required", 400);
+    }
+
     const course = await Course.findById(courseId);
     if (!course) {
       return responses.failureResponse("This Course does not exist", 404);

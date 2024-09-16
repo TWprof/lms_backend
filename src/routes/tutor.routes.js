@@ -9,4 +9,10 @@ router.get(
   tutorController.tutorOverviewController
 );
 
+router.get(
+  "/my-courses",
+  authMiddleware.authenticate,
+  tutorController.tutorCoursesController
+);
+
 module.exports = router;
