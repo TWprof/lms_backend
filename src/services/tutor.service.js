@@ -34,15 +34,6 @@ const tutorOverview = async (tutorId) => {
       isCompleted: 1,
     });
 
-    const matchingPayments = await Payment.find({
-      status: "success",
-      cartIds: {
-        $elemMatch: { $in: tutorCourseIds.map((id) => id.toString()) },
-      },
-    });
-
-    console.log("Matching Payments:", matchingPayments);
-
     // Total amount
     const totalAmount = await Payment.aggregate([
       {
@@ -77,64 +68,7 @@ const tutorOverview = async (tutorId) => {
 const tutorMyCourses = async (tutorId) => {
   try {
     // find all the courses created by the tutor
-    const coursesData = await Course.aggregate([
-      { $match: { tutor: tutorId } },
-      {
-        $lookup: {
-          from: "purchasedcourses",
-          localField: "_id",
-          foreignField: "courseId",
-          as: "purchases",
-        },
-      },
-      {
-        $lookup: {
-          from: "payment",
-          localField: "_id",
-          foreignField: "cartIds",
-          as: "payments",
-        },
-      },
-      {
-        $addFields: {
-          studentsEnrolled: { $size: "$purchases" },
-          certificatesCompleted: {
-            $size: {
-              $filter: {
-                input: "$purchases",
-                as: "purchase",
-                cond: { $eq: ["$$purchase.isCompleted", true] },
-              },
-            },
-          },
-          totalWatchTime: {
-            $sum: "$purchases.minutesSpent",
-          },
-          totalAmount: { $sum: "$payments.amount" },
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          topRatedCourse: { $first: "$$ROOT" },
-          leastRatedCourse: { $last: "$$ROOT" },
-          totalStudentEnrolled: { $sum: "$studentsEnrolled" },
-          totalAmountEarned: { $sum: "$totalAmount" },
-          totalWatchTime: { $sum: "$totalWatchTime" },
-          totalCoursesCreated: { $sum: 1 },
-          courseStatistics: {
-            $push: {
-              courseTitle: "$title",
-              rating: "$rating",
-              studentsEnrolled: "$studentsEnrolled",
-              totalWatchTime: "$totalWatchTime",
-              totalAmount: "$totalAmount",
-            },
-          },
-        },
-      },
-      { $sort: { rating: -1 } },
-    ]);
+    const coursesData = await Course.find({ tutor: tutorId }).lean();
 
     if (!coursesData || coursesData.length === 0) {
       return responses.failureResponse(
@@ -143,15 +77,113 @@ const tutorMyCourses = async (tutorId) => {
       );
     }
 
-    const result = coursesData[0];
+    // Initialize the variables for the statistics
+    let totalEnrolledStudents = 0;
+    let totalCourseCreated = coursesData.length;
+    let courseEnrolled = [];
+    let totalWatchHours = 0;
+    let courseRatings = [];
+    let totalRevenue = 0;
+
+    const weeklyRevenue = {};
+    const monthlyRevenue = {};
+
+    for (let course of coursesData) {
+      const courseId = course._id;
+
+      // Total students enrolled per course
+      const enrolledStudents = (
+        await PurchasedCourses.distinct("userId", {
+          courseId: courseId,
+        })
+      ).length;
+
+      totalEnrolledStudents += enrolledStudents;
+
+      // Total purchase per each course
+      const enrolledCourses = await PurchasedCourses.countDocuments({
+        courseId: courseId,
+      });
+
+      courseEnrolled.push({
+        courseTitle: course.title,
+        totalPurchase: enrolledCourses,
+      });
+
+      // Total Watch hours/course view
+      const courseWatchTime = await PurchasedCourses.aggregate([
+        { $match: { courseId: courseId } },
+        { $group: { _id: null, totalMinutes: { $sum: "$minutesSpent" } } },
+      ]);
+
+      const watchTimeInMinutes =
+        courseWatchTime.length > 0 ? courseWatchTime[0].totalMinutes : 0;
+
+      totalWatchHours += watchTimeInMinutes / 60;
+
+      // Track the Course Ratings
+      courseRatings.push({ title: course.title, rating: course.rating });
+
+      // Calculate the sales per week and month
+      const courseSales = await Payment.aggregate([
+        {
+          $match: {
+            status: "success",
+            cartIds: { $in: [courseId.toString()] },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              week: { $week: "$paidAt" },
+              month: { $month: "$paidAt" },
+              year: { $year: "$paidAt" },
+            },
+            totalRevenue: { $sum: "$amount" },
+          },
+        },
+      ]);
+
+      // Accumulate the revenue for each week/month
+      courseSales.forEach((payment) => {
+        const { week, month, year } = payment._id;
+        const weekKey = `${year}-W${week}`;
+        const monthKey = `${year}-M${month}`;
+
+        weeklyRevenue[weekKey] =
+          (weeklyRevenue[weekKey] || 0) + payment.totalRevenue;
+        monthlyRevenue[monthKey] =
+          (monthlyRevenue[monthKey] || 0) + payment.totalRevenue;
+
+        totalRevenue += payment.totalRevenue;
+      });
+    }
+
+    // Sort course ratings outside the loop to determine top and least-rated courses
+    courseRatings.sort((a, b) => b.rating - a.rating);
+
+    const topRatedCourse = courseRatings.length > 0 ? courseRatings[0] : null;
+    const leastRatedCourse =
+      courseRatings.length > 0 ? courseRatings[courseRatings.length - 1] : null;
+
+    // Calculate the top-rated and least-rated percentages
+    const topRatedPercent = topRatedCourse ? topRatedCourse.rating : 0;
+    const leastRatedPercent = leastRatedCourse ? leastRatedCourse.rating : 0;
+
     return responses.successResponse("Tutor Courses Statistics", 200, {
-      topRatedCourse: result.topRatedCourse.title,
-      leastRatedCourse: result.leastRatedCourse.title,
-      totalWatchTime: result.totalWatchTime,
-      totalCoursesCreated: result.totalCoursesCreated,
-      totalStudentsEnrolled: result.totalStudentsEnrolled,
-      totalAmountEarned: result.totalAmountEarned,
-      courseStatistics: result.courseStatistics,
+      totalEnrolledStudents,
+      totalCourseCreated,
+      courseEnrolled,
+      totalWatchHours,
+      topRatedCourse: topRatedCourse
+        ? { title: topRatedCourse.title, rating: topRatedPercent }
+        : null,
+      leastRatedCourse: leastRatedCourse
+        ? { title: leastRatedCourse.title, rating: leastRatedPercent }
+        : null,
+      totalRevenue,
+      weeklyRevenue,
+      monthlyRevenue,
     });
   } catch (error) {
     console.error("There was an error ", error);
