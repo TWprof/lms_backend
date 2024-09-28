@@ -17,9 +17,8 @@ const courseSchema = new Mongoose.Schema(
       required: false,
     },
 
-    videoURL: {
-      type: [String],
-      required: true,
+    price: {
+      type: Number,
     },
 
     basicInformation: {
@@ -37,25 +36,31 @@ const courseSchema = new Mongoose.Schema(
       },
     },
 
-    price: {
-      type: Number,
-    },
-
     whatYouWillLearn: {
       type: [String],
       required: true,
     },
 
-    lectureTitle: {
-      lectureDescription: {
-        type: String,
-        required: false,
+    lectures: [
+      {
+        title: {
+          type: String,
+          required: true,
+        },
+        description: {
+          type: String,
+          required: false,
+        },
+        videoURLs: {
+          type: [String],
+          required: false,
+        },
+        lectureNumber: {
+          type: Number,
+          required: true,
+        },
       },
-      video: {
-        type: [String],
-        required: false,
-      },
-    },
+    ],
 
     tutor: {
       type: Mongoose.Types.ObjectId,
@@ -71,6 +76,11 @@ const courseSchema = new Mongoose.Schema(
     rating: {
       type: Number,
       default: 0,
+    },
+
+    isPublished: {
+      type: Boolean,
+      default: false,
     },
   },
   {
