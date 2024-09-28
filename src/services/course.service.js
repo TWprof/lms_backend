@@ -4,27 +4,65 @@ const Admin = require("../models/admin.model");
 
 // Endpoint to create a course
 const createCourses = async (payload) => {
-  const admin = await Admin.findOne({ _id: payload.tutor });
+  try {
+    const tutor = await Admin.findOne({ _id: payload.tutor });
 
-  if (!admin || admin.role !== "1") {
+    if (!tutor || tutor.role !== "1") {
+      return responses.failureResponse(
+        "Apologies, only tutors can create a course.",
+        403
+      );
+    }
+
+    // display the tutor name
+    const tutorName = `${tutor.firstName} ${tutor.lastName}`;
+    payload.tutorName = tutorName;
+
+    // If no isPublished status is sent, default to false (unpublished)
+    if (payload.isPublished === undefined) {
+      payload.isPublished = false;
+    }
+
+    // Create the new course
+    const newCourse = await Course.create(payload);
+
+    // The success message would be based on the isPublished status
+    const message = newCourse.isPublished
+      ? "The Course has been published successfully."
+      : "The Course has been saved as a draft successfully.";
+
+    return responses.successResponse(message, 201, newCourse);
+  } catch (error) {
+    console.error("Error creating course", error);
     return responses.failureResponse(
-      "Only tutors can create a course. So sorry",
-      403
+      "There was an error creating this course",
+      500
     );
   }
-  // to display the tutors name
-  const tutorName = `${admin.firstName} ${admin.lastName}`;
-  payload.tutorName = tutorName;
-
-  const newCourse = await Course.create(payload);
-
-  return responses.successResponse(
-    "The Course has been created successfully",
-    201,
-    newCourse
-  );
 };
 
+// Endpoint to Publish an unpublished course
+const publishCourse = async (courseId) => {
+  try {
+    const course = await Course.findByIdAndUpdate(courseId);
+
+    if (!course) {
+      return responses.failureResponse("This course does not exist", 404);
+    }
+
+    if (course.isPublished === true) {
+      return responses.failureResponse(
+        "This course has been published already",
+        400
+      );
+    }
+
+    // update the isPublished status and update information
+  } catch (error) {
+    console.error("There was an error", error);
+    return responses.failureResponse("Unable to publish this course", 500);
+  }
+};
 // Implementing pagination
 const getAllCourses = async (query = {}) => {
   try {
