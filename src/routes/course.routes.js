@@ -11,6 +11,11 @@ router.get("/", courseControllers.getAllCoursesControllers);
 // Route to search a course from the available courses
 router.get("/search", courseControllers.findCourseController);
 
+// Route to update and publish a course
+router.put(
+  "/:courseId/publish",
+  courseControllers.updateAndPublishCourseController
+);
 // Route to update a course (What will you learn section)
 router.put(
   "/:courseId/what-you-will-learn",

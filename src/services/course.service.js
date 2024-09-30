@@ -42,22 +42,57 @@ const createCourses = async (payload) => {
 };
 
 // Endpoint to Publish an unpublished course
-const publishCourse = async (courseId) => {
+const updateAndPublishCourse = async (courseId, payload, publish = false) => {
+  /**
+   * This endpoint aims to allow a tutor edit their draft and still save it as a draft until they are ready to publish it and also edit their draft and publish it instantly.
+   */
   try {
-    const course = await Course.findByIdAndUpdate(courseId);
+    // Find the course by Id
+    const course = await Course.findById(courseId);
 
     if (!course) {
       return responses.failureResponse("This course does not exist", 404);
     }
 
-    if (course.isPublished === true) {
+    if (course.isPublished === true && publish) {
       return responses.failureResponse(
         "This course has been published already",
         400
       );
     }
 
-    // update the isPublished status and update information
+    // Validate that required payload is not empty
+    if (publish) {
+      if (
+        !(payload.title || course.title) ||
+        !(payload.description || course.description) ||
+        !(payload.lectures || course.lectures) ||
+        payload.lectures.length === 0
+      ) {
+        return responses.failureResponse(
+          "Your course must have a title, description, and at least one lecture before publishing. Do not leave Blank",
+          400
+        );
+      }
+    }
+    // Update fields and set isPublished only if 'publish' is true
+    const updateFields = publish
+      ? { ...payload, isPublished: true }
+      : { ...payload }; //isPublished remains false if its a draft.
+
+    // Update the course
+    const updatedCourse = await Course.findByIdAndUpdate(
+      courseId,
+      updateFields,
+      {
+        new: true,
+      }
+    );
+    const message = publish
+      ? "The course has been published successfully"
+      : "Your draft is saved successfully";
+
+    return responses.successResponse(message, 200, updatedCourse);
   } catch (error) {
     console.error("There was an error", error);
     return responses.failureResponse("Unable to publish this course", 500);
@@ -238,6 +273,7 @@ const findCourse = async (query) => {
 
 module.exports = {
   createCourses,
+  updateAndPublishCourse,
   getAllCourses,
   getEachCourse,
   updateCourse,
