@@ -6,6 +6,20 @@ const createCourseController = async (req, res) => {
   res.status(data.statusCode).json(data);
 };
 
+// Update and publish courses controller
+const updateAndPublishCourseController = async (req, res) => {
+  const { courseId } = req.params;
+  const { payload } = req.body;
+  const { publish } = req.body.publish || false;
+
+  const data = await courseServices.updateAndPublishCourse(
+    courseId,
+    payload,
+    publish
+  );
+  res.status(data.statusCode).json(data);
+};
+
 // Get all courses Controller
 const getAllCoursesControllers = async (req, res) => {
   const data = await courseServices.getAllCourses(req.query);
@@ -44,6 +58,7 @@ const findCourseController = async (req, res) => {
 
 module.exports = {
   createCourseController,
+  updateAndPublishCourseController,
   getAllCoursesControllers,
   getEachCourseController,
   updateCourseController,

@@ -87,9 +87,18 @@ const tutorMyCourses = async (tutorId) => {
 
     const weeklyRevenue = {};
     const monthlyRevenue = {};
+    let publishedCourses = 0;
+    let unpublishedCourses = 0;
 
     for (let course of coursesData) {
       const courseId = course._id;
+
+      // Check if the course is published
+      if (course.isPublished) {
+        publishedCourses++;
+      } else {
+        unpublishedCourses++;
+      }
 
       // Total students enrolled per course
       const enrolledStudents = (
@@ -108,6 +117,7 @@ const tutorMyCourses = async (tutorId) => {
       courseEnrolled.push({
         courseTitle: course.title,
         totalPurchase: enrolledCourses,
+        isPublished: course.isPublished,
       });
 
       // Total Watch hours/course view
@@ -173,7 +183,6 @@ const tutorMyCourses = async (tutorId) => {
     return responses.successResponse("Tutor Courses Statistics", 200, {
       totalEnrolledStudents,
       totalCourseCreated,
-      courseEnrolled,
       totalWatchHours,
       topRatedCourse: topRatedCourse
         ? { title: topRatedCourse.title, rating: topRatedPercent }
@@ -184,6 +193,9 @@ const tutorMyCourses = async (tutorId) => {
       totalRevenue,
       weeklyRevenue,
       monthlyRevenue,
+      publishedCourses,
+      unpublishedCourses,
+      courseEnrolled,
     });
   } catch (error) {
     console.error("There was an error ", error);
