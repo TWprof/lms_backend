@@ -195,6 +195,7 @@ const tutorMyCourses = async (tutorId) => {
       monthlyRevenue,
       publishedCourses,
       unpublishedCourses,
+      coursesData,
       courseEnrolled,
     });
   } catch (error) {
