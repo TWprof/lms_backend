@@ -1,19 +1,17 @@
 const cloudinary = require("../config/cloudinary.config");
+const path = require("path");
 
 const uploadFileToCloudinary = async (filepath) => {
   try {
-    console.log("cloudinary service", filepath);
-
-    const result = await new Promise((resolve, reject) => {
-      cloudinary.v2.uploader
-        .upload(filepath, { resource_type: "auto" })
-        .then((result) => resolve(result))
-        .catch((error) => reject(error));
+    const result = await cloudinary.v2.uploader.upload(filepath, {
+      resource_type: "auto",
+      use_filename: true,
     });
 
-    return result.secure_url;
+    return { url: result.secure_url, filename: path.basename(filepath) };
   } catch (error) {
     console.error(error);
+    throw new Error("Failed to upload to cloudinary");
   }
 };
 
