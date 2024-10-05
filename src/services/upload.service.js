@@ -29,7 +29,10 @@ const uploadFile = async (file) => {
   // Delete tmp file from server
   fs.unlinkSync(tmpUploadFileName);
 
-  return responses.successResponse("upload successful", 200, { url: result });
+  return responses.successResponse("upload successful", 200, {
+    url: result.url,
+    filename: file.name,
+  });
 };
 
 module.exports = { uploadFile };
