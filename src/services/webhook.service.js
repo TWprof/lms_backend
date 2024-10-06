@@ -48,7 +48,7 @@ const paystackWebhook = async (payload) => {
         });
 
         // Add purchased courses to the user's account
-        const { cartIds, userId, courseIds } = response.data.data.metadata;
+        const { cartIds, userId } = response.data.data.metadata;
 
         for (const cartId of cartIds) {
           const cartItem = await Cart.findById(cartId).populate("courseId");
