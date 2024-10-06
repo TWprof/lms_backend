@@ -52,22 +52,21 @@ const paystackWebhook = async (payload) => {
 
         for (const cartId of cartIds) {
           const cartItem = await Cart.findById(cartId).populate("courseId");
-          const purchasedCourse = new PurchasedCourse({
-            userId: userId,
-            courseId: cartItem.courseId._id,
-            purchaseDate: new Date(),
-          });
-          await purchasedCourse.save();
 
-          // Update cart status to 'purchased'
-          await Cart.findByIdAndUpdate(cartId, { status: "purchased" });
+          if (cartItem && cartItem.courseId) {
+            const purchasedCourse = new PurchasedCourse({
+              userId: userId,
+              courseId: cartItem.courseId._id,
+              purchaseDate: new Date(),
+            });
+
+            await purchasedCourse.save();
+
+            // Update cart status to 'purchased'
+            await Cart.findByIdAndUpdate(cartId, { status: "purchased" });
+          }
         }
 
-        // const cartItem = await Cart.findOne({ userId });
-
-        // if (cartItem.status === "purchased") {
-        //   await Cart.deleteMany({ userId });
-        // }
         // Clear cart of item purchased
         await Cart.deleteMany({ userId, status: "purchased" });
 

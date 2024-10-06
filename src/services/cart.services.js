@@ -156,15 +156,17 @@ const initiatePayment = async (payload) => {
 
   try {
     let totalCartPrice = 0;
+    let courseIds = [];
 
     for (let i = 0; i < cartIds.length; i++) {
       const cartItem = cartIds[i];
 
-      const cart = await Cart.findById(cartItem);
+      const cart = await Cart.findById(cartItem).populate("courseId");
 
-      const totalPrice = cart.price;
-
-      totalCartPrice += totalPrice;
+      if (cart) {
+        totalCartPrice += cart.price;
+        courseIds.push(cart.courseId);
+      }
     }
 
     const options = {
@@ -181,6 +183,7 @@ const initiatePayment = async (payload) => {
       metadata: {
         cartIds,
         userId,
+        courseIds,
       },
     };
 
@@ -197,7 +200,7 @@ const initiatePayment = async (payload) => {
         reference: response.data.data.reference,
         user: userId,
         currency: "NGN",
-        cartIds: cartIds,
+        cartIds: courseIds,
       });
 
       await newPayment.save();
