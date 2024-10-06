@@ -42,7 +42,7 @@ const createCourses = async (payload) => {
 };
 
 // Endpoint to Publish an unpublished course
-const updateAndPublishCourse = async (courseId, payload, publish = false) => {
+const updateAndPublishCourse = async (courseId, payload) => {
   /**
    * This endpoint aims to allow a tutor edit their draft and still save it as a draft until they are ready to publish it and also edit their draft and publish it instantly.
    */
@@ -54,7 +54,7 @@ const updateAndPublishCourse = async (courseId, payload, publish = false) => {
       return responses.failureResponse("This course does not exist", 404);
     }
 
-    if (course.isPublished === true && publish) {
+    if (course.isPublished === true) {
       return responses.failureResponse(
         "This course has been published already",
         400
@@ -62,7 +62,7 @@ const updateAndPublishCourse = async (courseId, payload, publish = false) => {
     }
 
     // Validate that required payload is not empty
-    if (publish) {
+    if (payload.isPublished === true) {
       if (
         !(payload.title || course.title) ||
         !(payload.description || course.description) ||
@@ -75,20 +75,17 @@ const updateAndPublishCourse = async (courseId, payload, publish = false) => {
         );
       }
     }
-    // Update fields and set isPublished only if 'publish' is true
-    const updateFields = publish
-      ? { ...payload, isPublished: true }
-      : { ...payload }; //isPublished remains false if its a draft.
 
     // Update the course
     const updatedCourse = await Course.findByIdAndUpdate(
       courseId,
-      updateFields,
+      { ...payload },
       {
         new: true,
       }
     );
-    const message = publish
+
+    const message = payload.isPublished
       ? "The course has been published successfully"
       : "Your draft is saved successfully";
 
@@ -98,6 +95,7 @@ const updateAndPublishCourse = async (courseId, payload, publish = false) => {
     return responses.failureResponse("Unable to publish this course", 500);
   }
 };
+
 // Implementing pagination
 const getAllCourses = async (query = {}) => {
   try {
@@ -115,6 +113,9 @@ const getAllCourses = async (query = {}) => {
       paginate.limit = Number(query.limit);
       delete query.limit;
     }
+
+    // to ensure that only published courses are returned,
+    query.isPublished = true;
 
     const courses = await Course.find(query)
       .skip((paginate.page - 1) * paginate.limit)
@@ -243,6 +244,9 @@ const findCourse = async (query) => {
     const limit = query.limit ? parseInt(query.limit, 10) : 10;
 
     const skip = (page - 1) * limit;
+
+    // Only published courses should be returned
+    query.isPublished = true;
 
     // Find the courses based on the search keyword
     const foundCourses = await Course.find(searchKeyword)

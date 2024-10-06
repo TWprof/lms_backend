@@ -10,13 +10,12 @@ const createCourseController = async (req, res) => {
 const updateAndPublishCourseController = async (req, res) => {
   const { courseId } = req.params;
   const { payload } = req.body;
-  const { publish } = req.body.publish || false;
 
-  const data = await courseServices.updateAndPublishCourse(
-    courseId,
-    payload,
-    publish
-  );
+  if (!payload) {
+    return res.status(400).json({ message: "Payload is required" });
+  }
+
+  const data = await courseServices.updateAndPublishCourse(courseId, payload);
   res.status(data.statusCode).json(data);
 };
 
