@@ -51,10 +51,18 @@ const courseSchema = new Mongoose.Schema(
           type: String,
           required: false,
         },
-        videoURLs: {
-          type: [String],
-          required: false,
-        },
+        videoURLs: [
+          {
+            url: {
+              type: String,
+              required: true,
+            },
+            filename: {
+              type: String,
+              required: true,
+            },
+          },
+        ],
         lectureNumber: {
           type: Number,
           required: true,
