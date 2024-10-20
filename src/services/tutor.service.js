@@ -331,8 +331,69 @@ const tutorStudents = async (tutorId) => {
   }
 };
 
+const tutorTransactions = async (tutorId) => {
+  try {
+    // find the courses by the tutor from the id
+    const courses = await Course.find({ tutor: tutorId });
+    // get the course ids
+    const courseIds = courses.map((course) => course._id);
+    // fetch the payment from each course
+    const payments = await Payment.find({
+      cartIds: { $in: courseIds },
+      status: "success",
+    })
+      .populate({ path: "userId", select: "firstName lastName" })
+      .populate({ path: "cartIds", select: "title", model: "Course" });
+
+    // initialize the statistics
+    let totalIncome = 0;
+    let totalCharges = 0;
+    let transactionHistory = [];
+
+    payments.forEach((payment) => {
+      totalIncome += payment.amount;
+
+      // platform charge
+      const charge = payment.amount * 0.1; // 10% charge
+      totalCharges += charge;
+
+      // To get the course name and user details
+      const userDetails = payment.userId
+        ? `${payment.userId.firstName || "N/A"} ${
+            payment.userId.lastName || "N/A"
+          }`
+        : "Unknown User";
+      const courseTitle = payment.cartIds
+        .map((course) => course.title)
+        .join(",");
+
+      transactionHistory.push({
+        email: payment.email,
+        amount: payment.amount,
+        date: payment.paidAt,
+        reference: payment.reference,
+        courses: courseTitle,
+        studentName: userDetails,
+      });
+    });
+
+    // To calculate the net income
+    const netIncome = totalIncome - totalCharges;
+    return responses.successResponse("Tutor Transaction details", 200, {
+      transactionHistory,
+      totalIncome,
+      totalCharges,
+      netIncome,
+    });
+  } catch (error) {
+    console.error("There was an error", error);
+    return responses.failureResponse("Error fetching tutors Transactions", 500);
+  }
+};
+
 module.exports = {
   tutorOverview,
   tutorMyCourses,
   tutorStudents,
+  tutorTransactions,
 };
