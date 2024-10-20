@@ -20,7 +20,7 @@ const paymentSchema = new mongoose.Schema({
   },
   userId: {
     type: mongoose.Types.ObjectId,
-    ref: "Student",
+    ref: "user",
   },
   cartIds: {
     type: [String],

@@ -21,4 +21,10 @@ router.get(
   tutorController.tutorStudentController
 );
 
+router.get(
+  "/transactions",
+  authMiddleware.authenticate,
+  tutorController.tutorTransactionController
+);
+
 module.exports = router;
