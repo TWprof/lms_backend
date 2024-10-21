@@ -198,7 +198,7 @@ const initiatePayment = async (payload) => {
         date: new Date().toISOString(),
         status: "pending",
         reference: response.data.data.reference,
-        user: userId,
+        userId: userId,
         currency: "NGN",
         cartIds: courseIds,
       });
