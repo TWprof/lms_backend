@@ -1,6 +1,7 @@
 const Course = require("../models/courses.model");
 const Payment = require("../models/payment.model");
 const PurchasedCourses = require("../models/purchasedCourse.model");
+const Review = require("../models/reviews.model");
 const responses = require("../utility/send.response");
 const User = require("../models/user.model");
 
@@ -8,14 +9,15 @@ const User = require("../models/user.model");
 const tutorOverview = async (tutorId) => {
   try {
     // Find all courses by the tutor
-    const courses = await Course.find({ tutor: tutorId }).select("_id");
+    const courses = await Course.find({ tutor: tutorId }).select(
+      "_id title rating"
+    );
 
     if (!courses || courses.length === 0) {
       return responses.failureResponse("No courses found for the tutor", 404);
     }
 
     const tutorCourseIds = courses.map((course) => course._id);
-    console.log("Tutor Course IDs:", tutorCourseIds);
 
     // Courses purchased/enrolled
     const enrolledCourses = await PurchasedCourses.countDocuments({
@@ -47,15 +49,64 @@ const tutorOverview = async (tutorId) => {
       },
       { $group: { _id: null, total: { $sum: "$amount" } } },
     ]);
-    console.log("Total Amount Aggregate Result:", totalAmount);
 
     const totalAmountValue = totalAmount.length > 0 ? totalAmount[0].total : 0;
+
+    // to get the Recent Reviews
+    const recentReviews = await Review.find({
+      courseId: { $in: tutorCourseIds },
+    })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate("courseId", "title")
+      .populate("userId", "firstName lastName")
+      .select("rating reviewText");
+
+    // Most Rated Course
+    const mostRatedCourse = await Review.aggregate([
+      {
+        $group: {
+          _id: "$courseId",
+          averageRating: { $avg: "$rating" },
+          reviewCount: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { averageRating: -1 },
+      },
+      {
+        $lookup: {
+          from: "courses",
+          localField: "_id",
+          foreignField: "_id",
+          as: "courseInfo",
+        },
+      },
+      {
+        $unwind: "$courseInfo",
+      },
+      {
+        $project: {
+          courseTitle: "$courseInfo.title",
+          averageRating: 1,
+          reviewCount: 1,
+        },
+      },
+      {
+        $limit: 1,
+      },
+    ]);
+
+    const mostRated = mostRatedCourse.length > 0 ? mostRatedCourse[0] : null;
 
     return responses.successResponse("Tutor overview statistics", 200, {
       enrolledCourses,
       enrolledStudents,
       certificates,
       totalAmount: totalAmountValue,
+      courses,
+      recentReviews,
+      mostRated,
     });
   } catch (error) {
     console.error("There was an error", error);

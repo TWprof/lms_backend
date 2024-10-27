@@ -42,9 +42,15 @@ const updateCourseController = async (req, res) => {
 // Rate Course Controller
 const rateCourseController = async (req, res) => {
   const { courseId } = req.params;
-  const { newRating } = req.body;
+  const { newRating, reviewtext } = req.body;
+  const userId = req.user.id;
 
-  const data = await courseServices.rateCourse(courseId, newRating);
+  const data = await courseServices.rateCourse({
+    courseId,
+    userId,
+    newRating,
+    reviewtext,
+  });
   res.status(data.statusCode).json(data);
 };
 
