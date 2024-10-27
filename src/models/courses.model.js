@@ -86,6 +86,11 @@ const courseSchema = new Mongoose.Schema(
       default: 0,
     },
 
+    reviewCount: {
+      type: Number,
+      default: 0,
+    },
+
     isPublished: {
       type: Boolean,
       default: false,

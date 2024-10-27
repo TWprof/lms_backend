@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const courseControllers = require("../controllers/courses.controllers");
+const authMiddleware = require("../middleware/auth");
 
 // Route to create a course
 router.post("/create-courses", courseControllers.createCourseController);
@@ -23,7 +24,11 @@ router.put(
 );
 
 // Route to rate a course by courseID
-router.post("/:courseId/rate", courseControllers.rateCourseController);
+router.post(
+  "/:courseId/rate",
+  authMiddleware.authenticate,
+  courseControllers.rateCourseController
+);
 
 // Route to get a single course
 router.get("/:courseId", courseControllers.getEachCourseController);

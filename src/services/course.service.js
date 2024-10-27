@@ -1,6 +1,7 @@
 const Course = require("../models/courses.model");
 const responses = require("../utility/send.response");
 const Admin = require("../models/admin.model");
+const Review = require("../models/reviews.model");
 
 // Endpoint to create a course
 const createCourses = async (payload) => {
@@ -195,20 +196,37 @@ const updateCourse = async (courseId, payload) => {
 };
 
 // Endpoint to rate courses
-const rateCourse = async (courseId, newRating) => {
+const rateCourse = async (payload) => {
   try {
+    const { courseId, userId, newRating, reviewText } = payload;
+
     if (newRating < 1 || newRating > 5) {
       return responses.failureResponse("Rating must be between 1 and 5", 400);
     }
 
     const course = await Course.findById(courseId);
     if (!course) {
+      console.log("Could not find course with ID:", courseId);
       return responses.failureResponse("Course not found", 404);
     }
+    // create the Review
+    await Review.findOneAndUpdate(
+      { courseId, userId },
+      { rating: newRating, reviewText },
+      { upsert: true }
+    );
 
-    const currentRating = course.rating || 0;
+    // Calculate the new average rating
+    const averageRating = await Review.aggregate([
+      { $match: { courseId: course._id } },
+      { $group: { _id: null, avgRating: { $avg: "$rating" } } },
+    ]);
 
-    course.rating = (currentRating + parseFloat(newRating)) / 2;
+    course.rating = averageRating[0]?.avgRating || 0;
+
+    // to update the review count to get the total number of reviews
+    const reviewCount = await Review.countDocuments({ courseId: course._id });
+    course.reviewCount = reviewCount;
 
     await course.save();
 
