@@ -355,6 +355,38 @@ const viewOrPurchaseCourse = async (courseId, userId, action) => {
     console.error("There was an error", error);
   }
 };
+
+// to check analytics of how many courses viewed gets purchased
+// const getCourseStats = async(courseId)=> {
+//     try {
+//       const course = await Course.findById(courseId).select(
+//         "viewsCount purchasesCount"
+//       );
+
+//       if (!course) {
+//         return responses.failureResponse(res, "Course not found", 404);
+//       }
+
+//       const conversionRate = course.viewsCount
+//         ? ((course.purchasesCount / course.viewsCount) * 100).toFixed(2)
+//         : 0;
+
+//       return responses.successResponse(
+//         res,
+//         "Course stats retrieved successfully",
+//         200,
+//         {
+//           views: course.viewsCount,
+//           purchases: course.purchasesCount,
+//           conversionRate: `${conversionRate}%`,
+//         }
+//       );
+//     } catch (error) {
+//       console.error("Error fetching course stats:", error);
+//       return responses.failureResponse(res, "Error fetching course stats", 500);
+//     }
+//   };
+
 module.exports = {
   createCourses,
   updateAndPublishCourse,

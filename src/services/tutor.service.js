@@ -284,42 +284,6 @@ const tutorStudents = async (tutorId) => {
 
     const tutorCourseIds = courses.map((course) => course._id);
 
-    // to find the total number of students
-    const totalStudents = await PurchasedCourses.distinct("userId", {
-      courseId: { $in: tutorCourseIds },
-    });
-
-    // to calculate the new students that purchase a course every month
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today.setDate(today.getDate() - 30));
-    const newStudents = await PurchasedCourses.distinct("userId", {
-      courseId: { $in: tutorCourseIds },
-      purchaseDate: { $gte: thirtyDaysAgo },
-    });
-
-    // to calculate the student retention percentage
-    const totalCompletion = await PurchasedCourses.countDocuments({
-      courseId: { $in: tutorCourseIds },
-      isCompleted: true,
-    });
-    const retentionPercentage = (totalCompletion / totalStudents.length) * 100;
-
-    // Calculate the total revenue
-    const totalAmount = await Payment.aggregate([
-      {
-        $match: {
-          status: "success",
-          cartIds: {
-            $elemMatch: { $in: tutorCourseIds.map((id) => id.toString()) },
-          },
-        },
-      },
-      { $group: { _id: null, total: { $sum: "$amount" } } },
-    ]);
-    console.log("Total Amount Aggregate Result:", totalAmount);
-
-    const totalAmountValue = totalAmount.length > 0 ? totalAmount[0].total : 0;
-
     // student Transaction Details
     const studentDetails = await PurchasedCourses.aggregate([
       {
@@ -350,36 +314,69 @@ const tutorStudents = async (tutorId) => {
         $unwind: "$courseDetails",
       },
       {
-        $lookup: {
-          from: "payments",
-          localField: "userId",
-          foreignField: "userId",
-          as: "paymentDetails",
+        $group: {
+          _id: "$userId",
+          userInfo: { $first: "$userDetails" },
+          coursesPurchased: {
+            $push: {
+              courseId: "$courseDetails._id",
+              title: "$courseDetails.title",
+              price: "$courseDetails.price",
+              purchaseDate: "$purchaseDate",
+            },
+          },
         },
-      },
-      {
-        $unwind: { path: "$paymentDetails", preserveNullAndEmptyArrays: true },
       },
       {
         $project: {
-          _id: 0,
-          "userDetails.firstName": 1,
-          "userDetails.lastName": 1,
-          "userDetails.email": 1,
-          "paymentDetails.amount": 1,
-          "paymentDetails.status": 1,
-          "courseDetails.title": 1,
-          "courseDetails.price": 1,
+          "userInfo.firstName": 1,
+          "userInfo.lastName": 1,
+          "userInfo.email": 1,
+          coursesPurchased: 1,
         },
       },
     ]);
+
+    // to calculate the new students that purchase a course every month
+    const today = new Date();
+
+    const thirtyDaysAgo = new Date(today.setDate(today.getDate() - 30));
+
+    // New students from last 30 days
+    const newStudents = studentDetails.filter((student) =>
+      student.coursesPurchased.some(
+        (course) => course.purchaseDate >= thirtyDaysAgo
+      )
+    );
+
+    // to calculate the student retention percentage
+    const totalCompletion = await PurchasedCourses.countDocuments({
+      courseId: { $in: tutorCourseIds },
+      isCompleted: true,
+    });
+    const retentionPercentage = (totalCompletion / studentDetails.length) * 100;
+
+    // Calculate the total revenue
+    const totalAmount = await Payment.aggregate([
+      {
+        $match: {
+          status: "success",
+          cartIds: {
+            $elemMatch: { $in: tutorCourseIds.map((id) => id.toString()) },
+          },
+        },
+      },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]);
+
+    const totalAmountValue = totalAmount.length > 0 ? totalAmount[0].total : 0;
 
     if (!studentDetails.length) {
       return responses.failureResponse("No student details found", 404);
     }
 
     return responses.successResponse("Tutor student statistics", 200, {
-      totalStudents: totalStudents.length,
+      totalStudents: studentDetails.length,
       newStudents: newStudents.length,
       retentionPercentage,
       totalAmount: totalAmountValue,
