@@ -33,4 +33,11 @@ router.post(
 // Route to get a single course
 router.get("/:courseId", courseControllers.getEachCourseController);
 
+// route to view or purchase a course
+router.post(
+  "/:courseId/action",
+  authMiddleware.authenticate,
+  courseControllers.viewOrPurchaseCourseController
+);
+
 module.exports = router;

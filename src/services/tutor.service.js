@@ -10,7 +10,7 @@ const tutorOverview = async (tutorId) => {
   try {
     // Find all courses by the tutor
     const courses = await Course.find({ tutor: tutorId }).select(
-      "_id title rating"
+      "_id title rating views"
     );
 
     if (!courses || courses.length === 0) {
@@ -100,13 +100,24 @@ const tutorOverview = async (tutorId) => {
     const mostRated = mostRatedCourse.length > 0 ? mostRatedCourse[0] : null;
 
     return responses.successResponse("Tutor overview statistics", 200, {
-      enrolledCourses,
-      enrolledStudents,
-      certificates,
-      totalAmount: totalAmountValue,
-      courses,
-      recentReviews,
-      mostRated,
+      quickStats: {
+        enrolledCourses,
+        enrolledStudents,
+        certificates,
+        totalAmount: totalAmountValue,
+      },
+      courseStatistics: courses.map((course) => ({
+        title: course.title,
+        enrolled: enrolledStudents,
+        views: course.views,
+      })),
+      mostRatedCourse: mostRated,
+      recentReviews: recentReviews.map((review) => ({
+        courseTitle: review.courseId.title,
+        reviewerName: `${review.userId.firstName} ${review.userId.lastName}`,
+        rating: review.rating,
+        reviewText: review.reviewText,
+      })),
     });
   } catch (error) {
     console.error("There was an error", error);
@@ -399,7 +410,7 @@ const tutorTransactions = async (tutorId) => {
       .populate({
         path: "userId",
         select: "firstName lastName",
-        model: "Users",
+        model: "User",
       })
       .populate({
         path: "cartIds",
@@ -454,35 +465,6 @@ const tutorTransactions = async (tutorId) => {
     return responses.failureResponse("Error fetching tutors Transactions", 500);
   }
 };
-
-// This function was used to fix a bug in the TuturTransaction endpoint above.
-const updatePaymentsWithMissingUserId = async () => {
-  try {
-    const payments = await Payment.find({ userId: { $exists: false } });
-
-    for (const payment of payments) {
-      // Find the user based on the user email
-      const user = await User.findOne({ email: payment.email });
-
-      if (user) {
-        // Update the payment with the correct userId
-        payment.userId = user._id;
-        await payment.save();
-        console.log(`Updated payment with reference: ${payment.reference}`);
-      } else {
-        console.log(
-          `No user found for payment with reference: ${payment.reference}`
-        );
-      }
-    }
-
-    console.log("Payment records updated successfully!");
-  } catch (error) {
-    console.error("Error updating payments with missing userId:", error);
-  }
-};
-
-updatePaymentsWithMissingUserId();
 
 module.exports = {
   tutorOverview,
