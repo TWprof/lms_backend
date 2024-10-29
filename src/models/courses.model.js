@@ -91,6 +91,21 @@ const courseSchema = new Mongoose.Schema(
       default: 0,
     },
 
+    views: {
+      type: Number,
+      default: 0,
+    },
+
+    viewsCount: {
+      type: Number,
+      default: 0,
+    },
+
+    purchaseCount: {
+      type: Number,
+      default: 0,
+    },
+
     isPublished: {
       type: Boolean,
       default: false,

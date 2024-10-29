@@ -2,6 +2,7 @@ const Course = require("../models/courses.model");
 const responses = require("../utility/send.response");
 const Admin = require("../models/admin.model");
 const Review = require("../models/reviews.model");
+const PurchasedCourse = require("../models/purchasedCourse.model");
 
 // Endpoint to create a course
 const createCourses = async (payload) => {
@@ -293,6 +294,67 @@ const findCourse = async (query) => {
   }
 };
 
+// This endpoint will track the courses that were viewed but not purchased
+const viewOrPurchaseCourse = async (courseId, userId, action) => {
+  try {
+    // check if the user has purchased the course
+    const isPurchased = await PurchasedCourse.exists({ courseId, userId });
+
+    if (action === "view") {
+      if (!isPurchased) {
+        // Increment the view if course not purchased
+        const course = await Course.findByIdAndUpdate(
+          courseId,
+          { $inc: { views: 1 } },
+          { new: true }
+        );
+
+        if (!course) {
+          return responses.failureResponse("This course does not exist", 404);
+        }
+
+        return responses.successResponse(
+          "Course viewed successfully",
+          200,
+          course
+        );
+      } else {
+        return responses.successResponse(
+          "This has already been purchased",
+          200,
+          isPurchased
+        );
+      }
+    }
+
+    if (action === "purchase") {
+      if (isPurchased) {
+        return responses.failureResponse(
+          "This course has already been purchased",
+          400
+        );
+      }
+
+      await new PurchasedCourse({ courseId, userId, purchaseDate: new Date() });
+
+      const course = await Course.findByIdAndUpdate(
+        courseId,
+        { $inc: { views: -1 } },
+        { new: true }
+      );
+
+      return responses.successResponse(
+        "Course prchased sccessfully",
+        200,
+        course
+      );
+    }
+
+    return responses.failureResponse("Invalid action", 400);
+  } catch (error) {
+    console.error("There was an error", error);
+  }
+};
 module.exports = {
   createCourses,
   updateAndPublishCourse,
@@ -301,4 +363,5 @@ module.exports = {
   updateCourse,
   rateCourse,
   findCourse,
+  viewOrPurchaseCourse,
 };

@@ -61,6 +61,19 @@ const findCourseController = async (req, res) => {
   res.status(data.statusCode).json(data);
 };
 
+const viewOrPurchaseCourseController = async (req, res) => {
+  const { courseId } = req.params;
+  const userId = req.user.id;
+  const { action } = req.body;
+
+  const data = await courseServices.viewOrPurchaseCourse(
+    courseId,
+    userId,
+    action
+  );
+  res.status(data.statusCode).json(data);
+};
+
 module.exports = {
   createCourseController,
   updateAndPublishCourseController,
@@ -69,4 +82,5 @@ module.exports = {
   updateCourseController,
   rateCourseController,
   findCourseController,
+  viewOrPurchaseCourseController,
 };
