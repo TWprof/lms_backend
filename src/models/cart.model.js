@@ -3,7 +3,7 @@ const Mongoose = require("mongoose");
 const cartSChema = new Mongoose.Schema({
   userId: {
     type: Mongoose.Types.ObjectId,
-    ref: "Student",
+    ref: "User",
     required: true,
   },
   courseId: {
