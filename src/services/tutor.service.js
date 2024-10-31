@@ -6,11 +6,45 @@ const responses = require("../utility/send.response");
 const User = require("../models/user.model");
 
 // Tutor overview statistics
-const tutorOverview = async (tutorId) => {
+const tutorOverview = async (tutorId, timePeriod) => {
   try {
+    // Calculate startDate and endDate based on the time period
+    let startDate, endDate;
+    const currentDate = new Date();
+
+    switch (timePeriod) {
+      case "week":
+        startDate = new Date(
+          currentDate.setDate(currentDate.getDate() - currentDate.getDay())
+        );
+        endDate = new Date(currentDate.setDate(startDate.getDate() + 6));
+        break;
+      case "month":
+        startDate = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          1
+        );
+        endDate = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() + 1,
+          0
+        );
+        break;
+      case "year":
+        startDate = new Date(currentDate.getFullYear(), 0, 1);
+        endDate = new Date(currentDate.getFullYear(), 11, 31);
+        break;
+      default:
+        return responses.failureResponse("Invalid time period", 400);
+    }
+
+    const dateFilter = { $gte: startDate, $lte: endDate };
+    console.log("start date", startDate);
+    console.log("end date", endDate);
     // Find all courses by the tutor
     const courses = await Course.find({ tutor: tutorId }).select(
-      "_id title rating views"
+      "_id title rating views reviewCount"
     );
 
     if (!courses || courses.length === 0) {
@@ -19,25 +53,28 @@ const tutorOverview = async (tutorId) => {
 
     const tutorCourseIds = courses.map((course) => course._id);
 
-    // Courses purchased/enrolled
+    // Apply date filter for enrolled courses
     const enrolledCourses = await PurchasedCourses.countDocuments({
       courseId: { $in: tutorCourseIds },
+      createdAt: dateFilter,
     });
-
-    // Students who purchased
+    console.log("Enrolled Courses Count:", enrolledCourses);
+    // Apply date filter for enrolled students
     const enrolledStudents = (
       await PurchasedCourses.distinct("userId", {
         courseId: { $in: tutorCourseIds },
+        createdAt: dateFilter,
       })
     ).length;
-
-    // Certificates acknowledged
+    console.log("Enrolled Students Count:", enrolledStudents);
+    // Apply date filter for certificates acknowledged
     const certificates = await PurchasedCourses.countDocuments({
       courseId: { $in: tutorCourseIds },
       isCompleted: 1,
+      createdAt: dateFilter,
     });
 
-    // Total amount
+    // Apply date filter for total amount
     const totalAmount = await Payment.aggregate([
       {
         $match: {
@@ -45,6 +82,7 @@ const tutorOverview = async (tutorId) => {
           cartIds: {
             $elemMatch: { $in: tutorCourseIds.map((id) => id.toString()) },
           },
+          createdAt: dateFilter,
         },
       },
       { $group: { _id: null, total: { $sum: "$amount" } } },
@@ -52,9 +90,10 @@ const tutorOverview = async (tutorId) => {
 
     const totalAmountValue = totalAmount.length > 0 ? totalAmount[0].total : 0;
 
-    // to get the Recent Reviews
+    // Apply date filter for recent reviews
     const recentReviews = await Review.find({
       courseId: { $in: tutorCourseIds },
+      createdAt: dateFilter,
     })
       .sort({ createdAt: -1 })
       .limit(5)
@@ -62,7 +101,7 @@ const tutorOverview = async (tutorId) => {
       .populate("userId", "firstName lastName")
       .select("rating reviewText");
 
-    // Most Rated Course
+    // Most Rated Course (not filtered by date, as ratings are accumulated over time)
     const mostRatedCourse = await Review.aggregate([
       {
         $group: {
@@ -71,9 +110,7 @@ const tutorOverview = async (tutorId) => {
           reviewCount: { $sum: 1 },
         },
       },
-      {
-        $sort: { averageRating: -1 },
-      },
+      { $sort: { averageRating: -1 } },
       {
         $lookup: {
           from: "courses",
@@ -82,9 +119,7 @@ const tutorOverview = async (tutorId) => {
           as: "courseInfo",
         },
       },
-      {
-        $unwind: "$courseInfo",
-      },
+      { $unwind: "$courseInfo" },
       {
         $project: {
           courseTitle: "$courseInfo.title",
@@ -92,12 +127,31 @@ const tutorOverview = async (tutorId) => {
           reviewCount: 1,
         },
       },
-      {
-        $limit: 1,
-      },
+      { $limit: 1 },
     ]);
 
     const mostRated = mostRatedCourse.length > 0 ? mostRatedCourse[0] : null;
+
+    // Performance metrics (apply date filtering where applicable)
+    const retentionRate =
+      enrolledStudents > 0 ? (certificates / enrolledCourses) * 100 : 0;
+    const completionRate =
+      enrolledStudents > 0 ? (certificates / enrolledCourses) * 100 : 0;
+
+    const totalFeedbackCount = courses.reduce(
+      (sum, course) => sum + course.reviewCount,
+      0
+    );
+
+    const totalFeedbackScore = courses.reduce(
+      (sum, course) => sum + course.rating * course.reviewCount,
+      0
+    );
+    const feedbackRate =
+      totalFeedbackCount > 0 ? totalFeedbackScore / totalFeedbackCount : 0;
+
+    const performanceScore =
+      retentionRate * 0.4 + completionRate * 0.4 + feedbackRate * 0.2;
 
     return responses.successResponse("Tutor overview statistics", 200, {
       quickStats: {
@@ -110,6 +164,7 @@ const tutorOverview = async (tutorId) => {
         title: course.title,
         enrolled: enrolledStudents,
         views: course.views,
+        reviewCount: course.reviewCount,
       })),
       mostRatedCourse: mostRated,
       recentReviews: recentReviews.map((review) => ({
@@ -118,6 +173,12 @@ const tutorOverview = async (tutorId) => {
         rating: review.rating,
         reviewText: review.reviewText,
       })),
+      performanceChart: {
+        retentionRate,
+        completionRate,
+        feedbackRate,
+        performanceScore,
+      },
     });
   } catch (error) {
     console.error("There was an error", error);
