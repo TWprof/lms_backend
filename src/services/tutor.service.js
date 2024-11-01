@@ -12,31 +12,41 @@ const tutorOverview = async (tutorId, timePeriod) => {
     let startDate, endDate;
     const currentDate = new Date();
 
-    switch (timePeriod) {
-      case "week":
-        startDate = new Date(
-          currentDate.setDate(currentDate.getDate() - currentDate.getDay())
-        );
-        endDate = new Date(currentDate.setDate(startDate.getDate() + 6));
-        break;
-      case "month":
-        startDate = new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth(),
-          1
-        );
-        endDate = new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth() + 1,
-          0
-        );
-        break;
-      case "year":
-        startDate = new Date(currentDate.getFullYear(), 0, 1);
-        endDate = new Date(currentDate.getFullYear(), 11, 31);
-        break;
-      default:
-        return responses.failureResponse("Invalid time period", 400);
+    if (!timePeriod) {
+      // Default to previous month
+      startDate = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() - 1,
+        1
+      );
+      endDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+    } else {
+      switch (timePeriod) {
+        case "week":
+          startDate = new Date(
+            currentDate.setDate(currentDate.getDate() - currentDate.getDay())
+          );
+          endDate = new Date(currentDate.setDate(startDate.getDate() + 6));
+          break;
+        case "month":
+          startDate = new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth(),
+            1
+          );
+          endDate = new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth() + 1,
+            0
+          );
+          break;
+        case "year":
+          startDate = new Date(currentDate.getFullYear(), 0, 1);
+          endDate = new Date(currentDate.getFullYear(), 11, 31);
+          break;
+        default:
+          return responses.failureResponse("Invalid time period", 400);
+      }
     }
 
     const dateFilter = { $gte: startDate, $lte: endDate };
@@ -524,6 +534,52 @@ const tutorTransactions = async (tutorId) => {
   }
 };
 
+const backfillTimestamps = async () => {
+  try {
+    // Update payments missing `createdAt`
+    const paymentsUpdate = await Payment.updateMany(
+      { createdAt: new Date("2024-01-01T00:00:00Z") },
+      [
+        {
+          $set: {
+            createdAt: {
+              $ifNull: ["$date", new Date("2024-01-01T00:00:00Z")], // Use `date` field if available
+            },
+          },
+        },
+      ]
+    );
+
+    console.log("Payments updated:", paymentsUpdate.modifiedCount);
+
+    // Update purchased courses missing `createdAt`
+    const purchasedCoursesUpdate = await PurchasedCourses.updateMany(
+      { createdAt: new Date("2024-01-01T00:00:00Z") },
+      [
+        {
+          $set: {
+            createdAt: {
+              $ifNull: ["$purchaseDate", new Date("2024-01-01T00:00:00Z")], // Replace with estimated default date
+            },
+          },
+        },
+      ]
+    );
+
+    console.log(
+      "Purchased Courses updated:",
+      purchasedCoursesUpdate.modifiedCount
+    );
+
+    console.log("Timestamp backfill completed successfully.");
+  } catch (error) {
+    console.error("Error updating timestamps:", error);
+  } finally {
+    // mongoose.connection.close();
+  }
+};
+
+backfillTimestamps();
 module.exports = {
   tutorOverview,
   tutorMyCourses,
