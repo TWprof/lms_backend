@@ -2,12 +2,12 @@ const tutorServices = require("../services/tutor.service");
 
 const tutorOverviewController = async (req, res) => {
   const tutorId = req.user._id;
-  const timePeriod = req.query.timePeriod;
+  const timePeriod = req.query.timeperiod || "month";
 
   if (req.role != "1") {
     return res.status(403).json({ message: "Tutors only" });
   }
-
+  console.log("Controller Time Period:", timePeriod);
   const data = await tutorServices.tutorOverview(tutorId, timePeriod);
 
   res.status(data.statusCode).json(data);

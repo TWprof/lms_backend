@@ -6,47 +6,37 @@ const responses = require("../utility/send.response");
 const User = require("../models/user.model");
 
 // Tutor overview statistics
-const tutorOverview = async (tutorId, timePeriod) => {
+const tutorOverview = async (tutorId, timePeriod = "month") => {
   try {
     // Calculate startDate and endDate based on the time period
     let startDate, endDate;
     const currentDate = new Date();
 
-    if (!timePeriod) {
-      // Default to previous month
-      startDate = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() - 1,
-        1
-      );
-      endDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
-    } else {
-      switch (timePeriod) {
-        case "week":
-          startDate = new Date(
-            currentDate.setDate(currentDate.getDate() - currentDate.getDay())
-          );
-          endDate = new Date(currentDate.setDate(startDate.getDate() + 6));
-          break;
-        case "month":
-          startDate = new Date(
-            currentDate.getFullYear(),
-            currentDate.getMonth(),
-            1
-          );
-          endDate = new Date(
-            currentDate.getFullYear(),
-            currentDate.getMonth() + 1,
-            0
-          );
-          break;
-        case "year":
-          startDate = new Date(currentDate.getFullYear(), 0, 1);
-          endDate = new Date(currentDate.getFullYear(), 11, 31);
-          break;
-        default:
-          return responses.failureResponse("Invalid time period", 400);
-      }
+    switch (timePeriod) {
+      case "week":
+        startDate = new Date(
+          currentDate.setDate(currentDate.getDate() - currentDate.getDay())
+        );
+        endDate = new Date(currentDate.setDate(startDate.getDate() + 6));
+        break;
+      case "month":
+        startDate = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          1
+        );
+        endDate = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() + 1,
+          0
+        );
+        break;
+      case "year":
+        startDate = new Date(currentDate.getFullYear(), 0, 1);
+        endDate = new Date(currentDate.getFullYear(), 11, 31);
+        break;
+      default:
+        return responses.failureResponse("Invalid time period", 400);
     }
 
     const dateFilter = { $gte: startDate, $lte: endDate };
@@ -68,7 +58,7 @@ const tutorOverview = async (tutorId, timePeriod) => {
       courseId: { $in: tutorCourseIds },
       createdAt: dateFilter,
     });
-    console.log("Enrolled Courses Count:", enrolledCourses);
+
     // Apply date filter for enrolled students
     const enrolledStudents = (
       await PurchasedCourses.distinct("userId", {
@@ -76,7 +66,7 @@ const tutorOverview = async (tutorId, timePeriod) => {
         createdAt: dateFilter,
       })
     ).length;
-    console.log("Enrolled Students Count:", enrolledStudents);
+
     // Apply date filter for certificates acknowledged
     const certificates = await PurchasedCourses.countDocuments({
       courseId: { $in: tutorCourseIds },
@@ -114,6 +104,11 @@ const tutorOverview = async (tutorId, timePeriod) => {
     // Most Rated Course (not filtered by date, as ratings are accumulated over time)
     const mostRatedCourse = await Review.aggregate([
       {
+        $match: {
+          createdAt: dateFilter,
+        },
+      },
+      {
         $group: {
           _id: "$courseId",
           averageRating: { $avg: "$rating" },
@@ -145,18 +140,36 @@ const tutorOverview = async (tutorId, timePeriod) => {
     // Performance metrics (apply date filtering where applicable)
     const retentionRate =
       enrolledStudents > 0 ? (certificates / enrolledCourses) * 100 : 0;
+
     const completionRate =
       enrolledStudents > 0 ? (certificates / enrolledCourses) * 100 : 0;
 
-    const totalFeedbackCount = courses.reduce(
-      (sum, course) => sum + course.reviewCount,
+    const courseFeedback = await Review.aggregate([
+      {
+        $match: {
+          courseId: { $in: tutorCourseIds },
+          createdAt: dateFilter, // Apply date filter
+        },
+      },
+      {
+        $group: {
+          _id: "$courseId",
+          totalFeedbackScore: { $sum: { $multiply: ["$rating", 1] } },
+          totalReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const totalFeedbackCount = courseFeedback.reduce(
+      (sum, feedback) => sum + feedback.totalReviews,
       0
     );
 
-    const totalFeedbackScore = courses.reduce(
-      (sum, course) => sum + course.rating * course.reviewCount,
+    const totalFeedbackScore = courseFeedback.reduce(
+      (sum, feedback) => sum + feedback.totalFeedbackScore,
       0
     );
+
     const feedbackRate =
       totalFeedbackCount > 0 ? totalFeedbackScore / totalFeedbackCount : 0;
 
@@ -534,52 +547,6 @@ const tutorTransactions = async (tutorId) => {
   }
 };
 
-const backfillTimestamps = async () => {
-  try {
-    // Update payments missing `createdAt`
-    const paymentsUpdate = await Payment.updateMany(
-      { createdAt: new Date("2024-01-01T00:00:00Z") },
-      [
-        {
-          $set: {
-            createdAt: {
-              $ifNull: ["$date", new Date("2024-01-01T00:00:00Z")], // Use `date` field if available
-            },
-          },
-        },
-      ]
-    );
-
-    console.log("Payments updated:", paymentsUpdate.modifiedCount);
-
-    // Update purchased courses missing `createdAt`
-    const purchasedCoursesUpdate = await PurchasedCourses.updateMany(
-      { createdAt: new Date("2024-01-01T00:00:00Z") },
-      [
-        {
-          $set: {
-            createdAt: {
-              $ifNull: ["$purchaseDate", new Date("2024-01-01T00:00:00Z")], // Replace with estimated default date
-            },
-          },
-        },
-      ]
-    );
-
-    console.log(
-      "Purchased Courses updated:",
-      purchasedCoursesUpdate.modifiedCount
-    );
-
-    console.log("Timestamp backfill completed successfully.");
-  } catch (error) {
-    console.error("Error updating timestamps:", error);
-  } finally {
-    // mongoose.connection.close();
-  }
-};
-
-backfillTimestamps();
 module.exports = {
   tutorOverview,
   tutorMyCourses,

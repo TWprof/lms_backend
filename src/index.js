@@ -6,6 +6,8 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const fileUpload = require("express-fileupload");
+const socketIo = require("socket.io");
+
 const userRoutes = require("./routes/user.routes");
 const tutorRoutes = require("./routes/tutor.routes");
 const adminRoutes = require("./routes/admin.routes.js");
@@ -63,6 +65,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Server
 const server = http.createServer(app);
+const io = socketIo(server);
 server.listen(PORT, () => {
   console.log(`Server is running good at port ${PORT}`);
 });
