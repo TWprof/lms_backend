@@ -2,14 +2,28 @@ const mongoose = require("mongoose");
 
 const messageSchema = new mongoose.Schema(
   {
-    sender: {
-      type: mongoose.Types.ObjectId,
-      ref: "User",
+    senderType: {
+      type: String,
+      enum: ["Admin", "User"],
+      required: true,
     },
 
-    receiver: {
+    senderId: {
       type: mongoose.Types.ObjectId,
-      ref: "User",
+      refPath: senderType,
+      required: true,
+    },
+
+    receiverType: {
+      type: String,
+      enum: ["Admin", "User"],
+      required: true,
+    },
+
+    receiverId: {
+      type: mongoose.Types.ObjectId,
+      refPath: receiverType,
+      required: true,
     },
 
     courseId: {

@@ -19,12 +19,15 @@ const userSignUp = async (payload) => {
   payload.password = await bcrypt.hash(payload.password, 10);
   payload.verificationToken = crypto.randomBytes(32).toString("hex");
   payload.verificationTokenExpires = new Date(Date.now() + 3600000);
+
   await User.create(payload);
   const message = `
   <h1>Email Verification</h1>
             <p>Thank you for registering. Please confirm your email by clicking this link:</p>
-            <a href="${process.env.HOST}verify-email?verificationToken=${payload.verificationToken}">Verify your account</a>
+           <a href = ${process.env.STUDENT_FRONTEND_HOST}verified-email?verificationToken=${payload.verificationToken}> Verify your email </a>
+
   `;
+
   const emailPayload = {
     to: payload.email,
     subject: "VERIFY YOUR EMAIL",
